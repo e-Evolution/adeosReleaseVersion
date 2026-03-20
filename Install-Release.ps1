@@ -16,11 +16,11 @@
 .PARAMETER SkipVerify
     Skip checksum verification.
 .EXAMPLE
-    .\Install-Release.ps1 -PackageName MexicanLocation -DestinationPath C:\Adempiere
+    .\Install-Release.ps1 -PackageName MexicanLocation -DestinationPath C:\PROGRA~1\e-Evolution\Adempiere
 .EXAMPLE
     .\Install-Release.ps1 -List
 .EXAMPLE
-    .\Install-Release.ps1 -All -DestinationPath C:\Adempiere -Tag v3.9.4-LTS-002
+    .\Install-Release.ps1 -All -DestinationPath C:\PROGRA~1\e-Evolution\Adempiere -Tag v3.9.4-LTS-002
 #>
 
 param(
@@ -181,7 +181,7 @@ function Install-SinglePackage {
 
         # Determine destination
         if (-not $Dest) {
-            $defaultDest = "C:\Adempiere"
+            $defaultDest = "C:\PROGRA~1\e-Evolution\Adempiere"
             $input = Read-Host "Enter ADempiere installation path [$defaultDest]"
             $Dest = if ($input) { $input } else { $defaultDest }
         }
@@ -277,7 +277,7 @@ if ($List) {
 
 if ($All) {
     if (-not $DestinationPath) {
-        $defaultDest = "C:\Adempiere"
+        $defaultDest = "C:\PROGRA~1\e-Evolution\Adempiere"
         $input = Read-Host "Enter ADempiere installation path [$defaultDest]"
         $DestinationPath = if ($input) { $input } else { $defaultDest }
     }
@@ -303,15 +303,15 @@ if ($All) {
     Write-Host "Usage: .\Install-Release.ps1 <-PackageName name | -All | -List> [options]"
     Write-Host ""
     Write-Host "  -PackageName       Package to install"
-    Write-Host "  -DestinationPath   Target path (default: C:\Adempiere)"
+    Write-Host "  -DestinationPath   Target path (default: C:\PROGRA~1\e-Evolution\Adempiere)"
     Write-Host "  -Tag               Release tag (default: latest)"
     Write-Host "  -All               Install all packages"
     Write-Host "  -List              List available packages"
     Write-Host "  -SkipVerify        Skip checksum verification"
     Write-Host ""
     Write-Host "Examples:"
-    Write-Host "  .\Install-Release.ps1 -PackageName MexicanLocation -DestinationPath C:\Adempiere"
+    Write-Host "  .\Install-Release.ps1 -PackageName MexicanLocation -DestinationPath C:\PROGRA~1\e-Evolution\Adempiere"
     Write-Host "  .\Install-Release.ps1 -List -Tag v3.9.4-LTS-002"
-    Write-Host "  .\Install-Release.ps1 -All -DestinationPath C:\Adempiere"
+    Write-Host "  .\Install-Release.ps1 -All -DestinationPath C:\PROGRA~1\e-Evolution\Adempiere"
     exit 1
 }

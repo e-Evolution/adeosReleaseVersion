@@ -8,7 +8,7 @@
 #   ./install-release.sh --all [destination] [--tag <tag>] [--skip-verify]
 #
 # One-liner install:
-#   bash <(curl -sL https://github.com/e-Evolution/adeosReleaseVersion/releases/latest/download/install-release.sh) MexicanLocation /opt/Adempiere
+#   bash <(curl -sL https://github.com/e-Evolution/adeosReleaseVersion/releases/latest/download/install-release.sh) MexicanLocation /home/adempiere/Adempiere
 #
 set -euo pipefail
 
@@ -187,7 +187,7 @@ install_package() {
 
     # Determine destination
     if [[ -z "$dest_path" ]]; then
-        local default_dest="/opt/Adempiere"
+        local default_dest="/home/adempiere/Adempiere"
         printf "Enter ADempiere installation path [%s]: " "$default_dest"
         read -r dest_path
         dest_path="${dest_path:-$default_dest}"
@@ -278,13 +278,13 @@ Options:
   --skip-verify          Skip checksum verification
 
 Examples:
-  ./install-release.sh MexicanLocation /opt/Adempiere
-  ./install-release.sh --all /opt/Adempiere --tag v3.9.4-LTS-002
+  ./install-release.sh MexicanLocation /home/adempiere/Adempiere
+  ./install-release.sh --all /home/adempiere/Adempiere --tag v3.9.4-LTS-002
   ./install-release.sh --list
   ./install-release.sh --list --tag v3.9.4-LTS-002
 
 One-liner install (no clone needed):
-  bash <(curl -sL https://github.com/e-Evolution/adeosReleaseVersion/releases/latest/download/install-release.sh) MexicanLocation /opt/Adempiere
+  bash <(curl -sL https://github.com/e-Evolution/adeosReleaseVersion/releases/latest/download/install-release.sh) MexicanLocation /home/adempiere/Adempiere
 USAGE
     exit 1
 }
@@ -342,7 +342,7 @@ main() {
             dest_path="${positional_args[0]:-}"
 
             if [[ -z "$dest_path" ]]; then
-                local default_dest="/opt/Adempiere"
+                local default_dest="/home/adempiere/Adempiere"
                 printf "Enter ADempiere installation path [%s]: " "$default_dest"
                 read -r dest_path
                 dest_path="${dest_path:-$default_dest}"

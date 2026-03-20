@@ -24,7 +24,7 @@ This repository distributes ADempiere extension packages as GitHub Release asset
 #### Option 1 — One-liner
 
 ```bash
-bash <(curl -sL https://github.com/e-Evolution/adeosReleaseVersion/releases/latest/download/install-release.sh) MexicanLocation /opt/Adempiere
+bash <(curl -sL https://github.com/e-Evolution/adeosReleaseVersion/releases/latest/download/install-release.sh) MexicanLocation /home/adempiere/Adempiere
 ```
 
 #### Option 2 — Download installer first
@@ -38,19 +38,19 @@ chmod +x install-release.sh
 ./install-release.sh --list
 
 # Install a single package to your ADempiere directory
-./install-release.sh MexicanLocation /opt/Adempiere
+./install-release.sh MexicanLocation /home/adempiere/Adempiere
 
 # Install Scala runtime libraries
-./install-release.sh Scala-Package-Libs /opt/Adempiere
+./install-release.sh Scala-Package-Libs /home/adempiere/Adempiere
 
 # Install all packages at once
-./install-release.sh --all /opt/Adempiere
+./install-release.sh --all /home/adempiere/Adempiere
 
 # Install from a specific release tag
-./install-release.sh MexicanLocation /opt/Adempiere --tag MexicanLocation-v1.1.0
+./install-release.sh MexicanLocation /home/adempiere/Adempiere --tag MexicanLocation-v1.1.0
 
 # Skip checksum verification (not recommended)
-./install-release.sh MexicanLocation /opt/Adempiere --skip-verify
+./install-release.sh MexicanLocation /home/adempiere/Adempiere --skip-verify
 ```
 
 ### Quick Install (Windows PowerShell)
@@ -63,16 +63,16 @@ Invoke-WebRequest -Uri "https://github.com/e-Evolution/adeosReleaseVersion/relea
 .\Install-Release.ps1 -List
 
 # Install a single package
-.\Install-Release.ps1 -PackageName MexicanLocation -DestinationPath C:\Adempiere
+.\Install-Release.ps1 -PackageName MexicanLocation -DestinationPath C:\PROGRA~1\e-Evolution\Adempiere
 
 # Install Scala runtime libraries
-.\Install-Release.ps1 -PackageName Scala-Package-Libs -DestinationPath C:\Adempiere
+.\Install-Release.ps1 -PackageName Scala-Package-Libs -DestinationPath C:\PROGRA~1\e-Evolution\Adempiere
 
 # Install all packages at once
-.\Install-Release.ps1 -All -DestinationPath C:\Adempiere
+.\Install-Release.ps1 -All -DestinationPath C:\PROGRA~1\e-Evolution\Adempiere
 
 # Install from a specific release tag
-.\Install-Release.ps1 -PackageName MexicanLocation -DestinationPath C:\Adempiere -Tag MexicanLocation-v1.1.0
+.\Install-Release.ps1 -PackageName MexicanLocation -DestinationPath C:\PROGRA~1\e-Evolution\Adempiere -Tag MexicanLocation-v1.1.0
 ```
 
 ### What the installer does
@@ -88,7 +88,7 @@ Invoke-WebRequest -Uri "https://github.com/e-Evolution/adeosReleaseVersion/relea
 After installation, files are placed preserving the ADempiere package layout:
 
 ```
-/opt/Adempiere/
+/home/adempiere/Adempiere/
   Adempiere/
     packages/
       MexicanLocation/
@@ -138,7 +138,7 @@ Este repositorio distribuye paquetes de extensiones de ADempiere como assets de 
 #### Opcion 1 — En una sola linea
 
 ```bash
-bash <(curl -sL https://github.com/e-Evolution/adeosReleaseVersion/releases/latest/download/install-release.sh) MexicanLocation /opt/Adempiere
+bash <(curl -sL https://github.com/e-Evolution/adeosReleaseVersion/releases/latest/download/install-release.sh) MexicanLocation /home/adempiere/Adempiere
 ```
 
 #### Opcion 2 — Descargar el instalador primero
@@ -152,19 +152,19 @@ chmod +x install-release.sh
 ./install-release.sh --list
 
 # Instalar un paquete individual en tu directorio de ADempiere
-./install-release.sh MexicanLocation /opt/Adempiere
+./install-release.sh MexicanLocation /home/adempiere/Adempiere
 
 # Instalar las librerias de Scala
-./install-release.sh Scala-Package-Libs /opt/Adempiere
+./install-release.sh Scala-Package-Libs /home/adempiere/Adempiere
 
 # Instalar todos los paquetes de una vez
-./install-release.sh --all /opt/Adempiere
+./install-release.sh --all /home/adempiere/Adempiere
 
 # Instalar desde un tag de release especifico
-./install-release.sh MexicanLocation /opt/Adempiere --tag MexicanLocation-v1.1.0
+./install-release.sh MexicanLocation /home/adempiere/Adempiere --tag MexicanLocation-v1.1.0
 
 # Omitir la verificacion de checksums (no recomendado)
-./install-release.sh MexicanLocation /opt/Adempiere --skip-verify
+./install-release.sh MexicanLocation /home/adempiere/Adempiere --skip-verify
 ```
 
 ### Instalacion Rapida (Windows PowerShell)
@@ -177,16 +177,16 @@ Invoke-WebRequest -Uri "https://github.com/e-Evolution/adeosReleaseVersion/relea
 .\Install-Release.ps1 -List
 
 # Instalar un paquete individual
-.\Install-Release.ps1 -PackageName MexicanLocation -DestinationPath C:\Adempiere
+.\Install-Release.ps1 -PackageName MexicanLocation -DestinationPath C:\PROGRA~1\e-Evolution\Adempiere
 
 # Instalar las librerias de Scala
-.\Install-Release.ps1 -PackageName Scala-Package-Libs -DestinationPath C:\Adempiere
+.\Install-Release.ps1 -PackageName Scala-Package-Libs -DestinationPath C:\PROGRA~1\e-Evolution\Adempiere
 
 # Instalar todos los paquetes de una vez
-.\Install-Release.ps1 -All -DestinationPath C:\Adempiere
+.\Install-Release.ps1 -All -DestinationPath C:\PROGRA~1\e-Evolution\Adempiere
 
 # Instalar desde un tag de release especifico
-.\Install-Release.ps1 -PackageName MexicanLocation -DestinationPath C:\Adempiere -Tag MexicanLocation-v1.1.0
+.\Install-Release.ps1 -PackageName MexicanLocation -DestinationPath C:\PROGRA~1\e-Evolution\Adempiere -Tag MexicanLocation-v1.1.0
 ```
 
 ### Que hace el instalador
@@ -202,7 +202,7 @@ Invoke-WebRequest -Uri "https://github.com/e-Evolution/adeosReleaseVersion/relea
 Despues de la instalacion, los archivos se colocan preservando la estructura de paquetes de ADempiere:
 
 ```
-/opt/Adempiere/
+/home/adempiere/Adempiere/
   Adempiere/
     packages/
       MexicanLocation/

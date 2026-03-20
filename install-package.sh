@@ -46,13 +46,13 @@ usage() {
     echo "Usage: $0 <package.jar> [destination] [--skip-verify]"
     echo ""
     echo "  package.jar    Path to the .jar archive to install"
-    echo "  destination    Target ADempiere installation path (default: /opt/Adempiere)"
+    echo "  destination    Target ADempiere installation path (default: /home/adempiere/Adempiere)"
     echo "  --skip-verify  Skip checksum verification"
     echo ""
     echo "Examples:"
-    echo "  $0 dist/MexicanLocation.jar /opt/Adempiere"
+    echo "  $0 dist/MexicanLocation.jar /home/adempiere/Adempiere"
     echo "  $0 dist/MexicanLocation.jar                    # interactive prompt"
-    echo "  $0 dist/MexicanLocation.jar /opt/Adempiere --skip-verify"
+    echo "  $0 dist/MexicanLocation.jar /home/adempiere/Adempiere --skip-verify"
     exit 1
 }
 
@@ -136,7 +136,7 @@ main() {
 
     # Determine destination
     if [[ -z "$dest_path" ]]; then
-        local default_dest="/opt/Adempiere"
+        local default_dest="/home/adempiere/Adempiere"
         printf "Enter ADempiere installation path [%s]: " "$default_dest"
         read -r dest_path
         dest_path="${dest_path:-$default_dest}"

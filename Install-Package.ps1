@@ -10,7 +10,7 @@
 .PARAMETER SkipVerify
     Skip checksum verification.
 .EXAMPLE
-    .\Install-Package.ps1 -PackageJar dist\MexicanLocation.jar -DestinationPath C:\Adempiere
+    .\Install-Package.ps1 -PackageJar dist\MexicanLocation.jar -DestinationPath C:\PROGRA~1\e-Evolution\Adempiere
 .EXAMPLE
     .\Install-Package.ps1 -PackageJar dist\MexicanLocation.jar
 #>
@@ -54,11 +54,11 @@ if (-not $PackageJar) {
     Write-Host "Usage: .\Install-Package.ps1 -PackageJar <path> [-DestinationPath <path>] [-SkipVerify]"
     Write-Host ""
     Write-Host "  -PackageJar       Path to the .jar archive to install"
-    Write-Host "  -DestinationPath  Target ADempiere installation path (default: C:\Adempiere)"
+    Write-Host "  -DestinationPath  Target ADempiere installation path (default: C:\PROGRA~1\e-Evolution\Adempiere)"
     Write-Host "  -SkipVerify       Skip checksum verification"
     Write-Host ""
     Write-Host "Examples:"
-    Write-Host "  .\Install-Package.ps1 -PackageJar dist\MexicanLocation.jar -DestinationPath C:\Adempiere"
+    Write-Host "  .\Install-Package.ps1 -PackageJar dist\MexicanLocation.jar -DestinationPath C:\PROGRA~1\e-Evolution\Adempiere"
     Write-Host "  .\Install-Package.ps1 -PackageJar dist\MexicanLocation.jar"
     exit 1
 }
@@ -109,7 +109,7 @@ if (-not $SkipVerify) {
 
 # Determine destination
 if (-not $DestinationPath) {
-    $defaultDest = "C:\Adempiere"
+    $defaultDest = "C:\PROGRA~1\e-Evolution\Adempiere"
     $input = Read-Host "Enter ADempiere installation path [$defaultDest]"
     $DestinationPath = if ($input) { $input } else { $defaultDest }
 }

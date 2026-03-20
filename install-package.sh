@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 #
-# install-package.sh — Install ADempiere package archives to a target directory
+# install-package.sh — Install ADempiere package archives to ADEMPIERE_HOME
 #
 # Usage:
-#   ./install-package.sh <package.jar> [destination] [--skip-verify]
+#   ./install-package.sh <package.jar> [ADEMPIERE_HOME] [--skip-verify]
 #
 set -euo pipefail
 
@@ -23,10 +23,8 @@ error()   { printf "${RED}[ERROR]${NC} %s\n" "$1" >&2; }
 detect_sha_cmd() {
     if command -v sha256sum &>/dev/null; then
         SHA_CMD="sha256sum"
-        SHA_CHECK_CMD="sha256sum -c"
     elif command -v shasum &>/dev/null; then
         SHA_CMD="shasum -a 256"
-        SHA_CHECK_CMD="shasum -a 256 -c"
     else
         error "No SHA256 tool found. Install coreutils or use macOS default shasum."
         exit 1
@@ -43,11 +41,12 @@ check_jar() {
 
 # --- Usage ---
 usage() {
-    echo "Usage: $0 <package.jar> [destination] [--skip-verify]"
+    echo "Usage: $0 <package.jar> [ADEMPIERE_HOME] [--skip-verify]"
     echo ""
-    echo "  package.jar    Path to the .jar archive to install"
-    echo "  destination    Target ADempiere installation path (default: /home/adempiere/Adempiere)"
-    echo "  --skip-verify  Skip checksum verification"
+    echo "  package.jar     Path to the .jar archive to install"
+    echo "  ADEMPIERE_HOME  ADempiere installation directory (default: /home/adempiere/Adempiere)"
+    echo "                  Packages are extracted to ADEMPIERE_HOME/packages/<name>/"
+    echo "  --skip-verify   Skip checksum verification"
     echo ""
     echo "Examples:"
     echo "  $0 dist/MexicanLocation.jar /home/adempiere/Adempiere"
@@ -66,7 +65,7 @@ main() {
     detect_sha_cmd
 
     local package_jar=""
-    local dest_path=""
+    local adempiere_home=""
     local skip_verify=false
 
     # Parse arguments
@@ -78,8 +77,8 @@ main() {
             *)
                 if [[ -z "$package_jar" ]]; then
                     package_jar="$arg"
-                elif [[ -z "$dest_path" ]]; then
-                    dest_path="$arg"
+                elif [[ -z "$adempiere_home" ]]; then
+                    adempiere_home="$arg"
                 fi
                 ;;
         esac
@@ -134,51 +133,72 @@ main() {
         info "Skipping checksum verification (--skip-verify)"
     fi
 
-    # Determine destination
-    if [[ -z "$dest_path" ]]; then
-        local default_dest="/home/adempiere/Adempiere"
-        printf "Enter ADempiere installation path [%s]: " "$default_dest"
-        read -r dest_path
-        dest_path="${dest_path:-$default_dest}"
+    # Determine ADEMPIERE_HOME
+    if [[ -z "$adempiere_home" ]]; then
+        local default_home="/home/adempiere/Adempiere"
+        printf "Enter ADEMPIERE_HOME path [%s]: " "$default_home"
+        read -r adempiere_home
+        adempiere_home="${adempiere_home:-$default_home}"
     fi
 
     # Validate/create destination
-    if [[ ! -d "$dest_path" ]]; then
-        printf "Destination '%s' does not exist. Create it? [y/N]: " "$dest_path"
+    if [[ ! -d "$adempiere_home" ]]; then
+        printf "ADEMPIERE_HOME '%s' does not exist. Create it? [y/N]: " "$adempiere_home"
         read -r create_dir
         if [[ "$create_dir" =~ ^[Yy]$ ]]; then
-            mkdir -p "$dest_path"
-            success "Created $dest_path"
+            mkdir -p "$adempiere_home"
+            success "Created $adempiere_home"
         else
-            error "Destination '$dest_path' does not exist."
+            error "ADEMPIERE_HOME '$adempiere_home' does not exist."
             exit 5
         fi
     fi
 
-    # Get absolute path to destination
-    local dest_absolute
-    dest_absolute="$(cd "$dest_path" && pwd)"
+    # Get absolute path
+    local home_absolute
+    home_absolute="$(cd "$adempiere_home" && pwd)"
 
-    # Extract archive
-    info "Extracting '$pkg_name' to $dest_absolute ..."
-    cd "$dest_absolute"
+    # Detect actual package dir name from checksum paths
+    local pkg_dir_name
+    pkg_dir_name=$(grep "packages/" "$checksum_file" 2>/dev/null | head -1 | sed 's|.*packages/\([^/]*\)/.*|\1|') || true
+    pkg_dir_name="${pkg_dir_name:-$pkg_name}"
+
+    # Check if package already exists and confirm overwrite
+    local pkg_extract_dir="$home_absolute/packages/$pkg_dir_name"
+    if [[ -d "$pkg_extract_dir" ]]; then
+        warn "Package directory already exists: $pkg_extract_dir"
+        printf "Overwrite existing files? [y/N]: "
+        read -r overwrite
+        if [[ ! "$overwrite" =~ ^[Yy]$ ]]; then
+            info "Installation cancelled."
+            exit 0
+        fi
+    fi
+
+    # Extract archive into ADEMPIERE_HOME
+    info "Extracting '$pkg_name' to $home_absolute ..."
+    info "  ADEMPIERE_HOME = $home_absolute"
+    cd "$home_absolute"
     if ! jar xf "$jar_absolute"; then
         error "Extraction failed"
         exit 6
     fi
 
-    # Count extracted files
+    # List extracted files
     local extracted_count
-    extracted_count=$(find "$dest_absolute/Adempiere/packages/$pkg_name" -type f -name "*.jar" 2>/dev/null | wc -l | tr -d ' ')
+    extracted_count=$(find "$pkg_extract_dir" -type f -name "*.jar" 2>/dev/null | wc -l | tr -d ' ')
+
+    info "Deployed files ($extracted_count JARs):"
+    find "$pkg_extract_dir" -type f -name "*.jar" 2>/dev/null | sort | while read -r f; do
+        printf "  %s\n" "${f#$home_absolute/}"
+    done
 
     # Verify per-file checksums of extracted files
     if [[ "$skip_verify" == false && -f "$checksum_file" ]]; then
         info "Verifying extracted file checksums..."
         local verify_failed=false
 
-        # Read per-file checksums (exclude the archive-level line)
         while IFS= read -r line; do
-            # Skip empty lines and the archive-level checksum
             [[ -z "$line" ]] && continue
             echo "$line" | grep -q "dist/" && continue
             echo "$line" | grep -q "^[a-f0-9]" || continue
@@ -186,11 +206,9 @@ main() {
             local expected_hash file_path
             expected_hash=$(echo "$line" | awk '{print $1}')
             file_path=$(echo "$line" | awk '{print $2}')
-
-            # Remove leading * if present (binary mode indicator)
             file_path="${file_path#\*}"
 
-            local full_path="$dest_absolute/$file_path"
+            local full_path="$home_absolute/$file_path"
 
             if [[ -f "$full_path" ]]; then
                 local actual_hash
@@ -199,16 +217,9 @@ main() {
                     error "Checksum mismatch: $file_path"
                     verify_failed=true
                 fi
-            else
-                # File path in checksum might be the archive-level entry
-                if ! echo "$file_path" | grep -q "\.jar$"; then
-                    continue
-                fi
-                # Only warn if it's a package file, not the archive itself
-                if echo "$file_path" | grep -q "Adempiere/packages/"; then
-                    warn "File not found: $full_path"
-                    verify_failed=true
-                fi
+            elif echo "$file_path" | grep -q "packages/"; then
+                warn "File not found: $full_path"
+                verify_failed=true
             fi
         done < "$checksum_file"
 
@@ -220,10 +231,16 @@ main() {
     fi
 
     # Clean up META-INF created by jar
-    rm -rf "$dest_absolute/META-INF" 2>/dev/null || true
+    rm -rf "$home_absolute/META-INF" 2>/dev/null || true
 
     echo ""
-    success "Installed '$pkg_name' ($extracted_count JARs) → $dest_absolute/Adempiere/packages/$pkg_name/"
+    echo "========================================"
+    success "INSTALLATION SUCCESSFUL"
+    info "  Package:        $pkg_name"
+    info "  Files deployed: $extracted_count JARs"
+    info "  ADEMPIERE_HOME: $home_absolute"
+    info "  Installed to:   $pkg_extract_dir"
+    echo "========================================"
 }
 
 main "$@"

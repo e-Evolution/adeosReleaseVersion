@@ -1,16 +1,17 @@
 <#
 .SYNOPSIS
-    Install ADempiere package archives to a target directory.
+    Install ADempiere package archives to ADEMPIERE_HOME.
 .DESCRIPTION
     Verifies checksums and extracts a .jar archive to the target ADempiere installation.
+    Packages are extracted to ADEMPIERE_HOME\packages\<name>\
 .PARAMETER PackageJar
     Path to the .jar archive to install.
-.PARAMETER DestinationPath
-    Target ADempiere installation path. If omitted, prompts interactively.
+.PARAMETER AdempiereHome
+    ADEMPIERE_HOME directory. If omitted, prompts interactively.
 .PARAMETER SkipVerify
     Skip checksum verification.
 .EXAMPLE
-    .\Install-Package.ps1 -PackageJar dist\MexicanLocation.jar -DestinationPath C:\PROGRA~1\e-Evolution\Adempiere
+    .\Install-Package.ps1 -PackageJar dist\MexicanLocation.jar -AdempiereHome C:\PROGRA~1\e-Evolution\Adempiere
 .EXAMPLE
     .\Install-Package.ps1 -PackageJar dist\MexicanLocation.jar
 #>
@@ -20,7 +21,7 @@ param(
     [string]$PackageJar,
 
     [Parameter(Position = 1)]
-    [string]$DestinationPath,
+    [string]$AdempiereHome,
 
     [switch]$SkipVerify
 )
@@ -32,6 +33,7 @@ function Write-Info    { param([string]$Msg) Write-Host "[INFO] $Msg" -Foregroun
 function Write-Success { param([string]$Msg) Write-Host "[OK] $Msg" -ForegroundColor Green }
 function Write-Warn    { param([string]$Msg) Write-Host "[WARN] $Msg" -ForegroundColor Yellow }
 function Write-Err     { param([string]$Msg) Write-Host "[ERROR] $Msg" -ForegroundColor Red }
+function Write-Detail  { param([string]$Msg) Write-Host "  $Msg" -ForegroundColor DarkGray }
 
 # --- Compute SHA256 hash ---
 function Get-Sha256Hash {
@@ -51,14 +53,15 @@ function Test-JarCommand {
 
 # --- Main ---
 if (-not $PackageJar) {
-    Write-Host "Usage: .\Install-Package.ps1 -PackageJar <path> [-DestinationPath <path>] [-SkipVerify]"
+    Write-Host "Usage: .\Install-Package.ps1 -PackageJar <path> [-AdempiereHome <path>] [-SkipVerify]"
     Write-Host ""
-    Write-Host "  -PackageJar       Path to the .jar archive to install"
-    Write-Host "  -DestinationPath  Target ADempiere installation path (default: C:\PROGRA~1\e-Evolution\Adempiere)"
-    Write-Host "  -SkipVerify       Skip checksum verification"
+    Write-Host "  -PackageJar     Path to the .jar archive to install"
+    Write-Host "  -AdempiereHome  ADEMPIERE_HOME directory (default: C:\PROGRA~1\e-Evolution\Adempiere)"
+    Write-Host "                  Packages are extracted to ADEMPIERE_HOME\packages\<name>\"
+    Write-Host "  -SkipVerify     Skip checksum verification"
     Write-Host ""
     Write-Host "Examples:"
-    Write-Host "  .\Install-Package.ps1 -PackageJar dist\MexicanLocation.jar -DestinationPath C:\PROGRA~1\e-Evolution\Adempiere"
+    Write-Host "  .\Install-Package.ps1 -PackageJar dist\MexicanLocation.jar -AdempiereHome C:\PROGRA~1\e-Evolution\Adempiere"
     Write-Host "  .\Install-Package.ps1 -PackageJar dist\MexicanLocation.jar"
     exit 1
 }
@@ -107,30 +110,51 @@ if (-not $SkipVerify) {
     Write-Info "Skipping checksum verification (-SkipVerify)"
 }
 
-# Determine destination
-if (-not $DestinationPath) {
-    $defaultDest = "C:\PROGRA~1\e-Evolution\Adempiere"
-    $input = Read-Host "Enter ADempiere installation path [$defaultDest]"
-    $DestinationPath = if ($input) { $input } else { $defaultDest }
+# Determine ADEMPIERE_HOME
+if (-not $AdempiereHome) {
+    $defaultHome = "C:\PROGRA~1\e-Evolution\Adempiere"
+    $input = Read-Host "Enter ADEMPIERE_HOME path [$defaultHome]"
+    $AdempiereHome = if ($input) { $input } else { $defaultHome }
 }
 
-# Validate/create destination
-if (-not (Test-Path $DestinationPath -PathType Container)) {
-    $create = Read-Host "Destination '$DestinationPath' does not exist. Create it? [y/N]"
+# Validate/create ADEMPIERE_HOME
+if (-not (Test-Path $AdempiereHome -PathType Container)) {
+    $create = Read-Host "ADEMPIERE_HOME '$AdempiereHome' does not exist. Create it? [y/N]"
     if ($create -match '^[Yy]$') {
-        New-Item -Path $DestinationPath -ItemType Directory -Force | Out-Null
-        Write-Success "Created $DestinationPath"
+        New-Item -Path $AdempiereHome -ItemType Directory -Force | Out-Null
+        Write-Success "Created $AdempiereHome"
     } else {
-        Write-Err "Destination '$DestinationPath' does not exist."
+        Write-Err "ADEMPIERE_HOME '$AdempiereHome' does not exist."
         exit 5
     }
 }
 
-$destAbsolute = (Resolve-Path $DestinationPath).Path
+$homeAbsolute = (Resolve-Path $AdempiereHome).Path
 
-# Extract archive
-Write-Info "Extracting '$pkgName' to $destAbsolute ..."
-Push-Location $destAbsolute
+# Detect package dir name from checksum paths
+$pkgDirName = $pkgName
+if (Test-Path $checksumFile) {
+    $firstPkgLine = Get-Content $checksumFile | Where-Object { $_ -match "packages/" } | Select-Object -First 1
+    if ($firstPkgLine -match "packages/([^/]+)/") {
+        $pkgDirName = $Matches[1]
+    }
+}
+
+# Check if package already exists and confirm overwrite
+$pkgExtractDir = Join-Path $homeAbsolute "packages\$pkgDirName"
+if (Test-Path $pkgExtractDir) {
+    Write-Warn "Package directory already exists: $pkgExtractDir"
+    $overwrite = Read-Host "Overwrite existing files? [y/N]"
+    if ($overwrite -notmatch '^[Yy]$') {
+        Write-Info "Installation cancelled."
+        exit 0
+    }
+}
+
+# Extract archive into ADEMPIERE_HOME
+Write-Info "Extracting '$pkgName' to $homeAbsolute ..."
+Write-Info "  ADEMPIERE_HOME = $homeAbsolute"
+Push-Location $homeAbsolute
 try {
     & jar xf $jarAbsolute
     if ($LASTEXITCODE -ne 0) {
@@ -141,11 +165,16 @@ try {
     Pop-Location
 }
 
-# Count extracted files
-$pkgExtractDir = Join-Path $destAbsolute "Adempiere\packages\$pkgName"
-$extractedCount = 0
+# List extracted files
+$extractedFiles = @()
 if (Test-Path $pkgExtractDir) {
-    $extractedCount = (Get-ChildItem -Path $pkgExtractDir -Filter "*.jar" -Recurse -File).Count
+    $extractedFiles = Get-ChildItem -Path $pkgExtractDir -Filter "*.jar" -Recurse -File
+}
+
+Write-Info "Deployed files:"
+foreach ($file in $extractedFiles) {
+    $relPath = $file.FullName.Substring($homeAbsolute.Length + 1)
+    Write-Detail $relPath
 }
 
 # Verify per-file checksums
@@ -156,17 +185,13 @@ if (-not $SkipVerify -and (Test-Path $checksumFile)) {
     Get-Content $checksumFile | ForEach-Object {
         $line = $_.Trim()
         if (-not $line) { return }
-        # Skip archive-level checksum line
         if ($line -match "dist/") { return }
         if ($line -notmatch "^[a-f0-9]") { return }
 
         $parts = $line -split '\s+'
         $expectedHash = $parts[0]
-        $filePath = $parts[1]
-        # Remove leading * if present
-        $filePath = $filePath -replace '^\*', ''
-
-        $fullPath = Join-Path $destAbsolute ($filePath.Replace('/', '\'))
+        $filePath = $parts[1] -replace '^\*', ''
+        $fullPath = Join-Path $homeAbsolute ($filePath.Replace('/', '\'))
 
         if (Test-Path $fullPath -PathType Leaf) {
             $actualHash = Get-Sha256Hash -FilePath $fullPath
@@ -174,11 +199,9 @@ if (-not $SkipVerify -and (Test-Path $checksumFile)) {
                 Write-Err "Checksum mismatch: $filePath"
                 $verifyFailed = $true
             }
-        } else {
-            if ($filePath -match "Adempiere/packages/") {
-                Write-Warn "File not found: $fullPath"
-                $verifyFailed = $true
-            }
+        } elseif ($filePath -match "packages/") {
+            Write-Warn "File not found: $fullPath"
+            $verifyFailed = $true
         }
     }
 
@@ -190,10 +213,16 @@ if (-not $SkipVerify -and (Test-Path $checksumFile)) {
 }
 
 # Clean up META-INF created by jar
-$metaInf = Join-Path $destAbsolute "META-INF"
+$metaInf = Join-Path $homeAbsolute "META-INF"
 if (Test-Path $metaInf) {
     Remove-Item -Path $metaInf -Recurse -Force -ErrorAction SilentlyContinue
 }
 
 Write-Host ""
-Write-Success "Installed '$pkgName' ($extractedCount JARs) -> $destAbsolute\Adempiere\packages\$pkgName\"
+Write-Host "========================================" -ForegroundColor Green
+Write-Success "INSTALLATION SUCCESSFUL"
+Write-Info "  Package:        $pkgName"
+Write-Info "  Files deployed: $($extractedFiles.Count) JARs"
+Write-Info "  ADEMPIERE_HOME: $homeAbsolute"
+Write-Info "  Installed to:   $pkgExtractDir"
+Write-Host "========================================" -ForegroundColor Green

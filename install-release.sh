@@ -3,12 +3,12 @@
 # install-release.sh — Download and install ADempiere packages from GitHub Releases
 #
 # Usage:
-#   ./install-release.sh <PackageName> [destination] [--tag <tag>] [--skip-verify]
+#   ./install-release.sh <PackageName> [ADEMPIERE_HOME] [--tag <tag>] [--skip-verify]
 #   ./install-release.sh --list [--tag <tag>]
-#   ./install-release.sh --all [destination] [--tag <tag>] [--skip-verify]
+#   ./install-release.sh --all [ADEMPIERE_HOME] [--tag <tag>] [--skip-verify]
 #
-# One-liner install:
-#   bash <(curl -sL https://github.com/e-Evolution/adeosReleaseVersion/releases/latest/download/install-release.sh) MexicanLocation /home/adempiere/Adempiere
+# One-liner install (any shell):
+#   curl -sL https://github.com/e-Evolution/adeosReleaseVersion/releases/latest/download/install-release.sh | bash -s -- MexicanLocation /home/adempiere/Adempiere
 #
 set -euo pipefail
 
@@ -114,7 +114,6 @@ list_packages() {
     printf "%-35s %s\n" "Package" "Size"
     printf "%-35s %s\n" "-----------------------------------" "--------"
 
-    # Parse asset names that end in .jar (not .sha256)
     echo "$response" | grep '"name"' | sed 's/.*: *"//;s/".*//' | grep '\.jar$' | grep -v '\.sha256' | while read -r asset_name; do
         local pkg_name="${asset_name%.jar}"
         local size
@@ -134,7 +133,7 @@ list_packages() {
 # --- Install a single package ---
 install_package() {
     local pkg_name="$1"
-    local dest_path="$2"
+    local adempiere_home="$2"
     local tag="$3"
     local skip_verify="$4"
 
@@ -185,37 +184,66 @@ install_package() {
         fi
     fi
 
-    # Determine destination
-    if [[ -z "$dest_path" ]]; then
-        local default_dest="/home/adempiere/Adempiere"
-        printf "Enter ADempiere installation path [%s]: " "$default_dest"
-        read -r dest_path
-        dest_path="${dest_path:-$default_dest}"
+    # Determine ADEMPIERE_HOME
+    if [[ -z "$adempiere_home" ]]; then
+        local default_home="/home/adempiere/Adempiere"
+        printf "Enter ADEMPIERE_HOME path [%s]: " "$default_home"
+        read -r adempiere_home
+        adempiere_home="${adempiere_home:-$default_home}"
     fi
 
-    # Validate/create destination
-    if [[ ! -d "$dest_path" ]]; then
-        printf "Destination '%s' does not exist. Create it? [y/N]: " "$dest_path"
+    # Validate/create ADEMPIERE_HOME
+    if [[ ! -d "$adempiere_home" ]]; then
+        printf "ADEMPIERE_HOME '%s' does not exist. Create it? [y/N]: " "$adempiere_home"
         read -r create_dir
         if [[ "$create_dir" =~ ^[Yy]$ ]]; then
-            mkdir -p "$dest_path"
-            success "Created $dest_path"
+            mkdir -p "$adempiere_home"
+            success "Created $adempiere_home"
         else
-            error "Destination '$dest_path' does not exist."
+            error "ADEMPIERE_HOME '$adempiere_home' does not exist."
             return 5
         fi
     fi
 
-    local dest_absolute
-    dest_absolute="$(cd "$dest_path" && pwd)"
+    local home_absolute
+    home_absolute="$(cd "$adempiere_home" && pwd)"
 
-    # Extract
-    info "Extracting '$pkg_name' to $dest_absolute ..."
-    cd "$dest_absolute"
+    # Detect actual package dir name from checksum paths
+    local pkg_dir_name
+    if [[ -f "$sha_file" ]]; then
+        pkg_dir_name=$(grep "packages/" "$sha_file" 2>/dev/null | head -1 | sed 's|.*packages/\([^/]*\)/.*|\1|') || true
+    fi
+    pkg_dir_name="${pkg_dir_name:-$pkg_name}"
+
+    # Check if package already exists and confirm overwrite
+    local pkg_extract_dir="$home_absolute/packages/$pkg_dir_name"
+    if [[ -d "$pkg_extract_dir" ]]; then
+        warn "Package directory already exists: $pkg_extract_dir"
+        printf "Overwrite existing files? [y/N]: "
+        read -r overwrite
+        if [[ ! "$overwrite" =~ ^[Yy]$ ]]; then
+            info "Installation of '$pkg_name' cancelled."
+            return 0
+        fi
+    fi
+
+    # Extract into ADEMPIERE_HOME
+    info "Extracting '$pkg_name' to $home_absolute ..."
+    info "  ADEMPIERE_HOME = $home_absolute"
+    cd "$home_absolute"
     if ! jar xf "$jar_file"; then
         error "Extraction failed"
         return 6
     fi
+
+    # List extracted files
+    local extracted_count
+    extracted_count=$(find "$pkg_extract_dir" -type f -name "*.jar" 2>/dev/null | wc -l | tr -d ' ')
+
+    info "Deployed files ($extracted_count JARs):"
+    find "$pkg_extract_dir" -type f -name "*.jar" 2>/dev/null | sort | while read -r f; do
+        printf "  %s\n" "${f#$home_absolute/}"
+    done
 
     # Verify per-file checksums
     if [[ "$skip_verify" == false && -f "$sha_file" ]]; then
@@ -232,7 +260,7 @@ install_package() {
             file_path=$(echo "$line" | awk '{print $2}')
             file_path="${file_path#\*}"
 
-            local full_path="$dest_absolute/$file_path"
+            local full_path="$home_absolute/$file_path"
 
             if [[ -f "$full_path" ]]; then
                 local actual_hash
@@ -241,7 +269,7 @@ install_package() {
                     error "Checksum mismatch: $file_path"
                     verify_failed=true
                 fi
-            elif echo "$file_path" | grep -q "Adempiere/packages/"; then
+            elif echo "$file_path" | grep -q "packages/"; then
                 warn "File not found: $full_path"
                 verify_failed=true
             fi
@@ -255,12 +283,16 @@ install_package() {
     fi
 
     # Clean up META-INF
-    rm -rf "$dest_absolute/META-INF" 2>/dev/null || true
+    rm -rf "$home_absolute/META-INF" 2>/dev/null || true
 
-    local extracted_count
-    extracted_count=$(find "$dest_absolute/Adempiere/packages/$pkg_name" -type f -name "*.jar" 2>/dev/null | wc -l | tr -d ' ')
-
-    success "Installed '$pkg_name' ($extracted_count JARs) → $dest_absolute/Adempiere/packages/$pkg_name/"
+    echo ""
+    echo "========================================"
+    success "INSTALLATION SUCCESSFUL"
+    info "  Package:        $pkg_name"
+    info "  Files deployed: $extracted_count JARs"
+    info "  ADEMPIERE_HOME: $home_absolute"
+    info "  Installed to:   $pkg_extract_dir"
+    echo "========================================"
 }
 
 # --- Usage ---
@@ -269,22 +301,24 @@ usage() {
 Usage: install-release.sh <command> [options]
 
 Commands:
-  <PackageName> [dest]   Download and install a package
-  --all [dest]           Download and install all packages
-  --list                 List available packages in a release
+  <PackageName> [ADEMPIERE_HOME]   Download and install a package
+  --all [ADEMPIERE_HOME]           Download and install all packages
+  --list                           List available packages in a release
 
 Options:
   --tag <tag>            Release tag (default: latest)
   --skip-verify          Skip checksum verification
 
+ADEMPIERE_HOME is the root installation directory of ADempiere.
+Packages are extracted to ADEMPIERE_HOME/packages/<name>/
+
 Examples:
   ./install-release.sh MexicanLocation /home/adempiere/Adempiere
-  ./install-release.sh --all /home/adempiere/Adempiere --tag v3.9.4-LTS-002
+  ./install-release.sh --all /home/adempiere/Adempiere --tag MexicanLocation-v1.1.0
   ./install-release.sh --list
-  ./install-release.sh --list --tag v3.9.4-LTS-002
 
-One-liner install (no clone needed):
-  bash <(curl -sL https://github.com/e-Evolution/adeosReleaseVersion/releases/latest/download/install-release.sh) MexicanLocation /home/adempiere/Adempiere
+One-liner install (any shell):
+  curl -sL https://github.com/e-Evolution/adeosReleaseVersion/releases/latest/download/install-release.sh | bash -s -- MexicanLocation /home/adempiere/Adempiere
 USAGE
     exit 1
 }
@@ -300,7 +334,7 @@ main() {
     check_jar
 
     local command=""
-    local dest_path=""
+    local adempiere_home=""
     local tag="latest"
     local skip_verify=false
     local positional_args=()
@@ -339,18 +373,17 @@ main() {
             list_packages "$tag"
             ;;
         all)
-            dest_path="${positional_args[0]:-}"
+            adempiere_home="${positional_args[0]:-}"
 
-            if [[ -z "$dest_path" ]]; then
-                local default_dest="/home/adempiere/Adempiere"
-                printf "Enter ADempiere installation path [%s]: " "$default_dest"
-                read -r dest_path
-                dest_path="${dest_path:-$default_dest}"
+            if [[ -z "$adempiere_home" ]]; then
+                local default_home="/home/adempiere/Adempiere"
+                printf "Enter ADEMPIERE_HOME path [%s]: " "$default_home"
+                read -r adempiere_home
+                adempiere_home="${adempiere_home:-$default_home}"
             fi
 
-            info "Installing all packages (tag: $tag) to $dest_path ..."
+            info "Installing all packages (tag: $tag) to $adempiere_home ..."
 
-            # Get package list from API
             local api_url
             if [[ "$tag" == "latest" ]]; then
                 api_url="https://api.github.com/repos/$REPO/releases/latest"
@@ -372,8 +405,7 @@ main() {
             while IFS= read -r pkg_name; do
                 [[ -z "$pkg_name" ]] && continue
                 echo ""
-                # Use subshell to isolate trap and cd
-                (install_package "$pkg_name" "$dest_path" "$tag" "$skip_verify") && {
+                (install_package "$pkg_name" "$adempiere_home" "$tag" "$skip_verify") && {
                     installed=$((installed + 1))
                 } || {
                     failed=$((failed + 1))
@@ -381,18 +413,17 @@ main() {
             done <<< "$packages"
 
             echo ""
-            success "Done. Installed $installed packages ($failed failures) → $dest_path"
+            success "Done. Installed $installed packages ($failed failures) → $adempiere_home"
             ;;
         *)
-            # Single package install
             local pkg_name="${positional_args[0]:-}"
-            dest_path="${positional_args[1]:-}"
+            adempiere_home="${positional_args[1]:-}"
 
             if [[ -z "$pkg_name" ]]; then
                 usage
             fi
 
-            install_package "$pkg_name" "$dest_path" "$tag" "$skip_verify"
+            install_package "$pkg_name" "$adempiere_home" "$tag" "$skip_verify"
             ;;
     esac
 }

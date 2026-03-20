@@ -96,22 +96,22 @@ pack_package() {
 
     local archive="$DIST_DIR/${output_name}.jar"
     local checksum_file="$DIST_DIR/${output_name}.jar.sha256"
-    local relative_path="Adempiere/packages/${pkg_name}"
+    local relative_path="packages/${pkg_name}"
 
     # Clean .DS_Store files before archiving
     find "$pkg_dir" -name ".DS_Store" -type f -delete 2>/dev/null || true
 
-    # Generate per-file SHA256 checksums (relative to SCRIPT_DIR)
-    cd "$SCRIPT_DIR"
+    # Generate per-file SHA256 checksums (relative to Adempiere/ base)
+    cd "$SCRIPT_DIR/Adempiere"
     > "$checksum_file"
 
     while IFS= read -r -d '' file; do
-        local rel_file="${file#$SCRIPT_DIR/}"
+        local rel_file="${file#$SCRIPT_DIR/Adempiere/}"
         $SHA_CMD "$rel_file" >> "$checksum_file"
     done < <(find "$relative_path" -type f -name "*.jar" -print0 | sort -z)
 
-    # Create archive with jar command
-    # Remove existing archive first to avoid appending
+    # Create archive with jar command from Adempiere/ base
+    # Internal paths: packages/<name>/lib/...
     rm -f "$archive"
     jar cf "$archive" "$relative_path/"
 

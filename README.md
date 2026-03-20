@@ -91,22 +91,23 @@ Invoke-WebRequest -Uri "https://github.com/e-Evolution/adeosReleaseVersion/relea
 
 ### Resulting directory structure
 
-After installation, files are placed preserving the ADempiere package layout:
+After installation, files are placed under `ADEMPIERE_HOME/packages/`:
 
 ```
-/home/adempiere/Adempiere/
-  Adempiere/
-    packages/
-      MexicanLocation/
-        lib/
-          FastInfoset.jar
-          batik-all-1.9.jar
-          ...
-      Scala/    # extracted from Scala-Package-Libs.jar
-        io.github.dotty-cps-async.dotty-cps-async_3-1.1.2.jar
-        lib/
-          scala3-library_3-3.6.4.jar
-          ...
+ADEMPIERE_HOME=/home/adempiere/Adempiere
+
+/home/adempiere/Adempiere/          # ADEMPIERE_HOME
+  packages/
+    MexicanLocation/
+      lib/
+        FastInfoset.jar
+        batik-all-1.9.jar
+        ...
+    Scala/                          # extracted from Scala-Package-Libs.jar
+      io.github.dotty-cps-async.dotty-cps-async_3-1.1.2.jar
+      lib/
+        scala3-library_3-3.6.4.jar
+        ...
 ```
 
 ### Troubleshooting
@@ -211,22 +212,23 @@ Invoke-WebRequest -Uri "https://github.com/e-Evolution/adeosReleaseVersion/relea
 
 ### Estructura de directorios resultante
 
-Despues de la instalacion, los archivos se colocan preservando la estructura de paquetes de ADempiere:
+Despues de la instalacion, los archivos se colocan bajo `ADEMPIERE_HOME/packages/`:
 
 ```
-/home/adempiere/Adempiere/
-  Adempiere/
-    packages/
-      MexicanLocation/
-        lib/
-          FastInfoset.jar
-          batik-all-1.9.jar
-          ...
-      Scala/    # extracted from Scala-Package-Libs.jar
-        io.github.dotty-cps-async.dotty-cps-async_3-1.1.2.jar
-        lib/
-          scala3-library_3-3.6.4.jar
-          ...
+ADEMPIERE_HOME=/home/adempiere/Adempiere
+
+/home/adempiere/Adempiere/          # ADEMPIERE_HOME
+  packages/
+    MexicanLocation/
+      lib/
+        FastInfoset.jar
+        batik-all-1.9.jar
+        ...
+    Scala/                          # extraido desde Scala-Package-Libs.jar
+      io.github.dotty-cps-async.dotty-cps-async_3-1.1.2.jar
+      lib/
+        scala3-library_3-3.6.4.jar
+        ...
 ```
 
 ### Solucion de Problemas

@@ -17,7 +17,7 @@ This repository distributes ADempiere extension packages as GitHub Release asset
 | Package | Description |
 |---------|-------------|
 | MexicanLocation | Mexican localization — CFDI, fiscal stamps, SAT catalogs |
-| Scala | Scala runtime libraries required by MexicanLocation |
+| Scala-Package-Libs | Scala runtime libraries required by MexicanLocation |
 
 ### Quick Install (Linux/macOS)
 
@@ -41,7 +41,7 @@ chmod +x install-release.sh
 ./install-release.sh MexicanLocation /opt/Adempiere
 
 # Install Scala runtime libraries
-./install-release.sh Scala /opt/Adempiere
+./install-release.sh Scala-Package-Libs /opt/Adempiere
 
 # Install all packages at once
 ./install-release.sh --all /opt/Adempiere
@@ -66,7 +66,7 @@ Invoke-WebRequest -Uri "https://github.com/e-Evolution/adeosReleaseVersion/relea
 .\Install-Release.ps1 -PackageName MexicanLocation -DestinationPath C:\Adempiere
 
 # Install Scala runtime libraries
-.\Install-Release.ps1 -PackageName Scala -DestinationPath C:\Adempiere
+.\Install-Release.ps1 -PackageName Scala-Package-Libs -DestinationPath C:\Adempiere
 
 # Install all packages at once
 .\Install-Release.ps1 -All -DestinationPath C:\Adempiere
@@ -96,7 +96,7 @@ After installation, files are placed preserving the ADempiere package layout:
           FastInfoset.jar
           batik-all-1.9.jar
           ...
-      Scala/
+      Scala/    # extracted from Scala-Package-Libs.jar
         io.github.dotty-cps-async.dotty-cps-async_3-1.1.2.jar
         lib/
           scala3-library_3-3.6.4.jar
@@ -131,7 +131,7 @@ Este repositorio distribuye paquetes de extensiones de ADempiere como assets de 
 | Paquete | Descripcion |
 |---------|-------------|
 | MexicanLocation | Localizacion mexicana — CFDI, timbrado fiscal, catalogos SAT |
-| Scala | Librerias de runtime de Scala requeridas por MexicanLocation |
+| Scala-Package-Libs | Librerias de runtime de Scala requeridas por MexicanLocation |
 
 ### Instalacion Rapida (Linux/macOS)
 
@@ -155,7 +155,7 @@ chmod +x install-release.sh
 ./install-release.sh MexicanLocation /opt/Adempiere
 
 # Instalar las librerias de Scala
-./install-release.sh Scala /opt/Adempiere
+./install-release.sh Scala-Package-Libs /opt/Adempiere
 
 # Instalar todos los paquetes de una vez
 ./install-release.sh --all /opt/Adempiere
@@ -180,7 +180,7 @@ Invoke-WebRequest -Uri "https://github.com/e-Evolution/adeosReleaseVersion/relea
 .\Install-Release.ps1 -PackageName MexicanLocation -DestinationPath C:\Adempiere
 
 # Instalar las librerias de Scala
-.\Install-Release.ps1 -PackageName Scala -DestinationPath C:\Adempiere
+.\Install-Release.ps1 -PackageName Scala-Package-Libs -DestinationPath C:\Adempiere
 
 # Instalar todos los paquetes de una vez
 .\Install-Release.ps1 -All -DestinationPath C:\Adempiere
@@ -210,7 +210,7 @@ Despues de la instalacion, los archivos se colocan preservando la estructura de 
           FastInfoset.jar
           batik-all-1.9.jar
           ...
-      Scala/
+      Scala/    # extracted from Scala-Package-Libs.jar
         io.github.dotty-cps-async.dotty-cps-async_3-1.1.2.jar
         lib/
           scala3-library_3-3.6.4.jar

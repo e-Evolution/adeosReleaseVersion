@@ -57,6 +57,15 @@ usage() {
     exit 1
 }
 
+# --- Map directory name to distribution name ---
+dist_name() {
+    local dir_name="$1"
+    case "$dir_name" in
+        Scala) echo "Scala-Package-Libs" ;;
+        *)     echo "$dir_name" ;;
+    esac
+}
+
 # --- Pack a single package ---
 pack_package() {
     local pkg_name="$1"
@@ -77,13 +86,16 @@ pack_package() {
         return 3
     fi
 
-    info "Packing '$pkg_name' ($jar_count JARs)..."
+    local output_name
+    output_name=$(dist_name "$pkg_name")
+
+    info "Packing '$pkg_name' as '$output_name' ($jar_count JARs)..."
 
     # Create dist directory
     mkdir -p "$DIST_DIR"
 
-    local archive="$DIST_DIR/${pkg_name}.jar"
-    local checksum_file="$DIST_DIR/${pkg_name}.jar.sha256"
+    local archive="$DIST_DIR/${output_name}.jar"
+    local checksum_file="$DIST_DIR/${output_name}.jar.sha256"
     local relative_path="Adempiere/packages/${pkg_name}"
 
     # Clean .DS_Store files before archiving
@@ -110,7 +122,7 @@ pack_package() {
     local archive_size
     archive_size=$(du -h "$archive" | cut -f1 | tr -d ' ')
 
-    success "Packed '$pkg_name': $archive ($archive_size, $jar_count JARs)"
+    success "Packed '$pkg_name' → $archive ($archive_size, $jar_count JARs)"
 }
 
 # --- Main ---

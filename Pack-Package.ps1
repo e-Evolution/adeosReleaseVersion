@@ -49,6 +49,15 @@ function Get-Sha256Line {
     return "$hash  $RelativePath"
 }
 
+# --- Map directory name to distribution name ---
+function Get-DistName {
+    param([string]$DirName)
+    switch ($DirName) {
+        "Scala" { return "Scala-Package-Libs" }
+        default { return $DirName }
+    }
+}
+
 # --- Pack a single package ---
 function Invoke-PackPackage {
     param([string]$Name)
@@ -69,15 +78,16 @@ function Invoke-PackPackage {
         return 3
     }
 
-    Write-Info "Packing '$Name' ($jarCount JARs)..."
+    $outputName = Get-DistName -DirName $Name
+    Write-Info "Packing '$Name' as '$outputName' ($jarCount JARs)..."
 
     # Create dist directory
     if (-not (Test-Path $DistDir)) {
         New-Item -Path $DistDir -ItemType Directory -Force | Out-Null
     }
 
-    $archive = Join-Path $DistDir "$Name.jar"
-    $checksumFile = Join-Path $DistDir "$Name.jar.sha256"
+    $archive = Join-Path $DistDir "$outputName.jar"
+    $checksumFile = Join-Path $DistDir "$outputName.jar.sha256"
     $relativePath = "Adempiere/packages/$Name"
 
     # Clean .DS_Store files
@@ -106,7 +116,7 @@ function Invoke-PackPackage {
         }
 
         # Append archive-level checksum
-        $archiveRelPath = "dist/$Name.jar"
+        $archiveRelPath = "dist/$outputName.jar"
         $checksumLines += Get-Sha256Line -FilePath $archive -RelativePath $archiveRelPath
 
         # Write checksum file
@@ -120,7 +130,7 @@ function Invoke-PackPackage {
     $archiveSizeMB = [math]::Round($archiveSize / 1MB, 1)
     $sizeStr = if ($archiveSizeMB -ge 1) { "${archiveSizeMB}M" } else { "$([math]::Round($archiveSize / 1KB, 0))K" }
 
-    Write-Success "Packed '$Name': $archive ($sizeStr, $jarCount JARs)"
+    Write-Success "Packed '$Name' -> $archive ($sizeStr, $jarCount JARs)"
     return 0
 }
 

@@ -110,11 +110,17 @@ if (-not $SkipVerify) {
     Write-Info "Skipping checksum verification (-SkipVerify)"
 }
 
-# Determine ADEMPIERE_HOME
+# Determine ADEMPIERE_HOME: parameter > env var > interactive prompt
 if (-not $AdempiereHome) {
-    $defaultHome = "C:\PROGRA~1\e-Evolution\Adempiere"
-    $input = Read-Host "Enter ADEMPIERE_HOME path [$defaultHome]"
-    $AdempiereHome = if ($input) { $input } else { $defaultHome }
+    if ($env:ADEMPIERE_HOME) {
+        $AdempiereHome = $env:ADEMPIERE_HOME
+        Write-Info "Using ADEMPIERE_HOME from environment: $AdempiereHome"
+    } else {
+        $defaultHome = "C:\PROGRA~1\e-Evolution\Adempiere"
+        Write-Warn "ADEMPIERE_HOME environment variable is not set."
+        $input = Read-Host "Enter ADEMPIERE_HOME path [$defaultHome]"
+        $AdempiereHome = if ($input) { $input } else { $defaultHome }
+    }
 }
 
 # Validate/create ADEMPIERE_HOME

@@ -133,12 +133,18 @@ main() {
         info "Skipping checksum verification (--skip-verify)"
     fi
 
-    # Determine ADEMPIERE_HOME
+    # Determine ADEMPIERE_HOME: argument > env var > interactive prompt
     if [[ -z "$adempiere_home" ]]; then
-        local default_home="/home/adempiere/Adempiere"
-        printf "Enter ADEMPIERE_HOME path [%s]: " "$default_home"
-        read -r adempiere_home
-        adempiere_home="${adempiere_home:-$default_home}"
+        if [[ -n "${ADEMPIERE_HOME:-}" ]]; then
+            adempiere_home="$ADEMPIERE_HOME"
+            info "Using ADEMPIERE_HOME from environment: $adempiere_home"
+        else
+            local default_home="/home/adempiere/Adempiere"
+            warn "ADEMPIERE_HOME environment variable is not set."
+            printf "Enter ADEMPIERE_HOME path [%s]: " "$default_home"
+            read -r adempiere_home
+            adempiere_home="${adempiere_home:-$default_home}"
+        fi
     fi
 
     # Validate/create destination

@@ -93,23 +93,40 @@ export ADEMPIERE_HOME=/home/adempiere/Adempiere
 
 ### Quick Install (Windows PowerShell)
 
+#### Step 1 — Download the installer
+
 ```powershell
-# Download the installer script
 Invoke-WebRequest -Uri "https://github.com/e-Evolution/adeosReleaseVersion/releases/latest/download/Install-Release.ps1" -OutFile "Install-Release.ps1"
+```
 
-# List available packages
+#### Step 2 — List available packages
+
+```powershell
 .\Install-Release.ps1 -List
+```
 
-# Install with explicit path
+#### Step 3 — Install packages
+
+```powershell
+# Install MexicanLocation
 .\Install-Release.ps1 -PackageName MexicanLocation -AdempiereHome C:\PROGRA~1\e-Evolution\Adempiere
 
-# Or rely on ADEMPIERE_HOME env var
+# Install Scala runtime libraries
+.\Install-Release.ps1 -PackageName Scala-Package-Libs -AdempiereHome C:\PROGRA~1\e-Evolution\Adempiere
+```
+
+#### Step 4 (optional) — Install all packages at once
+
+```powershell
+.\Install-Release.ps1 -All -AdempiereHome C:\PROGRA~1\e-Evolution\Adempiere
+```
+
+#### Additional options
+
+```powershell
+# Use ADEMPIERE_HOME env var instead of passing -AdempiereHome
 $env:ADEMPIERE_HOME = "C:\PROGRA~1\e-Evolution\Adempiere"
 .\Install-Release.ps1 -PackageName MexicanLocation
-.\Install-Release.ps1 -PackageName Scala-Package-Libs
-
-# Install all packages at once
-.\Install-Release.ps1 -All -AdempiereHome C:\PROGRA~1\e-Evolution\Adempiere
 
 # Install from a specific release tag
 .\Install-Release.ps1 -PackageName MexicanLocation -AdempiereHome C:\PROGRA~1\e-Evolution\Adempiere -Tag MexicanLocation-v1.1.0
@@ -251,23 +268,40 @@ export ADEMPIERE_HOME=/home/adempiere/Adempiere
 
 ### Instalacion Rapida (Windows PowerShell)
 
+#### Paso 1 — Descargar el instalador
+
 ```powershell
-# Descargar el script de instalacion
 Invoke-WebRequest -Uri "https://github.com/e-Evolution/adeosReleaseVersion/releases/latest/download/Install-Release.ps1" -OutFile "Install-Release.ps1"
+```
 
-# Listar paquetes disponibles
+#### Paso 2 — Listar paquetes disponibles
+
+```powershell
 .\Install-Release.ps1 -List
+```
 
-# Instalar con path explicito
+#### Paso 3 — Instalar paquetes
+
+```powershell
+# Instalar MexicanLocation
 .\Install-Release.ps1 -PackageName MexicanLocation -AdempiereHome C:\PROGRA~1\e-Evolution\Adempiere
 
-# O usar la variable de ambiente ADEMPIERE_HOME
+# Instalar librerias de Scala
+.\Install-Release.ps1 -PackageName Scala-Package-Libs -AdempiereHome C:\PROGRA~1\e-Evolution\Adempiere
+```
+
+#### Paso 4 (opcional) — Instalar todos los paquetes de una vez
+
+```powershell
+.\Install-Release.ps1 -All -AdempiereHome C:\PROGRA~1\e-Evolution\Adempiere
+```
+
+#### Opciones adicionales
+
+```powershell
+# Usar ADEMPIERE_HOME env var en lugar de pasar -AdempiereHome
 $env:ADEMPIERE_HOME = "C:\PROGRA~1\e-Evolution\Adempiere"
 .\Install-Release.ps1 -PackageName MexicanLocation
-.\Install-Release.ps1 -PackageName Scala-Package-Libs
-
-# Instalar todos los paquetes de una vez
-.\Install-Release.ps1 -All -AdempiereHome C:\PROGRA~1\e-Evolution\Adempiere
 
 # Instalar desde un tag de release especifico
 .\Install-Release.ps1 -PackageName MexicanLocation -AdempiereHome C:\PROGRA~1\e-Evolution\Adempiere -Tag MexicanLocation-v1.1.0

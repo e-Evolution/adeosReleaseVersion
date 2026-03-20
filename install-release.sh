@@ -54,7 +54,7 @@ post_install_steps() {
         local run_stop
         run_stop=$(prompt_user "  Run this step? [Y/n]: ")
         if [[ ! "$run_stop" =~ ^[Nn]$ ]]; then
-            bash "$stop_script" || warn "Server stop returned non-zero exit code"
+            (cd "$(dirname "$stop_script")" && bash "$(basename "$stop_script")") || warn "Server stop returned non-zero exit code"
             success "Server stop executed"
         else
             info "  Skipped"
@@ -72,7 +72,7 @@ post_install_steps() {
         local run_setup
         run_setup=$(prompt_user "  Run this step? [Y/n]: ")
         if [[ ! "$run_setup" =~ ^[Nn]$ ]]; then
-            bash "$setup_script" || warn "Silent setup returned non-zero exit code"
+            (cd "$(dirname "$setup_script")" && bash "$(basename "$setup_script")") || warn "Silent setup returned non-zero exit code"
             success "Silent setup executed"
         else
             info "  Skipped"
@@ -90,7 +90,7 @@ post_install_steps() {
         local run_start
         run_start=$(prompt_user "  Run this step? [Y/n]: ")
         if [[ ! "$run_start" =~ ^[Nn]$ ]]; then
-            bash "$start_script" || warn "Server start returned non-zero exit code"
+            (cd "$(dirname "$start_script")" && bash "$(basename "$start_script")") || warn "Server start returned non-zero exit code"
             success "Server start executed"
         else
             info "  Skipped"

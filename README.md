@@ -19,6 +19,26 @@ This repository distributes ADempiere extension packages as GitHub Release asset
 | MexicanLocation | Mexican localization — CFDI, fiscal stamps, SAT catalogs |
 | Scala-Package-Libs | Scala runtime libraries required by MexicanLocation |
 
+### ADEMPIERE_HOME
+
+The installer resolves the installation directory in this order:
+
+1. **CLI argument** — path passed directly to the script
+2. **`ADEMPIERE_HOME` environment variable** — if set, used automatically
+3. **Interactive prompt** — if neither is available, the script asks for the path
+
+Set the environment variable to avoid passing the path every time:
+
+```bash
+# Linux/macOS — add to ~/.bashrc, ~/.zshrc, or ~/.config/fish/config.fish
+export ADEMPIERE_HOME=/home/adempiere/Adempiere
+```
+
+```powershell
+# Windows PowerShell — set system environment variable
+[Environment]::SetEnvironmentVariable("ADEMPIERE_HOME", "C:\PROGRA~1\e-Evolution\Adempiere", "User")
+```
+
 ### Quick Install (Linux/macOS)
 
 #### Option 1 — One-liner (bash)
@@ -33,7 +53,17 @@ bash <(curl -sL https://github.com/e-Evolution/adeosReleaseVersion/releases/late
 curl -sL https://github.com/e-Evolution/adeosReleaseVersion/releases/latest/download/install-release.sh | bash -s -- MexicanLocation /home/adempiere/Adempiere
 ```
 
-#### Option 2 — Download installer first
+#### Option 2 — Using ADEMPIERE_HOME environment variable
+
+```bash
+# If ADEMPIERE_HOME is set, no need to pass the path
+export ADEMPIERE_HOME=/home/adempiere/Adempiere
+
+curl -sL https://github.com/e-Evolution/adeosReleaseVersion/releases/latest/download/install-release.sh | bash -s -- MexicanLocation
+curl -sL https://github.com/e-Evolution/adeosReleaseVersion/releases/latest/download/install-release.sh | bash -s -- Scala-Package-Libs
+```
+
+#### Option 3 — Download installer first
 
 ```bash
 # Download the installer script
@@ -43,11 +73,13 @@ chmod +x install-release.sh
 # List available packages
 ./install-release.sh --list
 
-# Install a single package to your ADempiere directory
+# Install with explicit path
 ./install-release.sh MexicanLocation /home/adempiere/Adempiere
 
-# Install Scala runtime libraries
-./install-release.sh Scala-Package-Libs /home/adempiere/Adempiere
+# Or rely on ADEMPIERE_HOME env var
+export ADEMPIERE_HOME=/home/adempiere/Adempiere
+./install-release.sh MexicanLocation
+./install-release.sh Scala-Package-Libs
 
 # Install all packages at once
 ./install-release.sh --all /home/adempiere/Adempiere
@@ -68,26 +100,30 @@ Invoke-WebRequest -Uri "https://github.com/e-Evolution/adeosReleaseVersion/relea
 # List available packages
 .\Install-Release.ps1 -List
 
-# Install a single package
-.\Install-Release.ps1 -PackageName MexicanLocation -DestinationPath C:\PROGRA~1\e-Evolution\Adempiere
+# Install with explicit path
+.\Install-Release.ps1 -PackageName MexicanLocation -AdempiereHome C:\PROGRA~1\e-Evolution\Adempiere
 
-# Install Scala runtime libraries
-.\Install-Release.ps1 -PackageName Scala-Package-Libs -DestinationPath C:\PROGRA~1\e-Evolution\Adempiere
+# Or rely on ADEMPIERE_HOME env var
+$env:ADEMPIERE_HOME = "C:\PROGRA~1\e-Evolution\Adempiere"
+.\Install-Release.ps1 -PackageName MexicanLocation
+.\Install-Release.ps1 -PackageName Scala-Package-Libs
 
 # Install all packages at once
-.\Install-Release.ps1 -All -DestinationPath C:\PROGRA~1\e-Evolution\Adempiere
+.\Install-Release.ps1 -All -AdempiereHome C:\PROGRA~1\e-Evolution\Adempiere
 
 # Install from a specific release tag
-.\Install-Release.ps1 -PackageName MexicanLocation -DestinationPath C:\PROGRA~1\e-Evolution\Adempiere -Tag MexicanLocation-v1.1.0
+.\Install-Release.ps1 -PackageName MexicanLocation -AdempiereHome C:\PROGRA~1\e-Evolution\Adempiere -Tag MexicanLocation-v1.1.0
 ```
 
 ### What the installer does
 
 1. Downloads the `.jar` archive and `.sha256` checksum file from GitHub Releases
 2. Verifies the archive integrity against the SHA256 checksum
-3. Extracts the archive to the specified ADempiere installation directory
-4. Verifies each extracted file against per-file checksums
-5. Cleans up temporary files
+3. Checks if the package already exists and asks to confirm overwrite
+4. Extracts the archive to `ADEMPIERE_HOME/packages/<name>/`
+5. Displays a detailed log of all deployed JAR files
+6. Verifies each extracted file against per-file checksums
+7. Shows an `INSTALLATION SUCCESSFUL` summary with package details
 
 ### Resulting directory structure
 
@@ -118,6 +154,7 @@ ADEMPIERE_HOME=/home/adempiere/Adempiere
 | `curl: command not found` | Install curl: `apt install curl` (Debian/Ubuntu) or `yum install curl` (RHEL/CentOS) |
 | Checksum verification failed | Re-download the package — the file may be corrupted |
 | Permission denied | Run with `sudo` or ensure write access to the destination directory |
+| `ADEMPIERE_HOME is not set` | Set the environment variable or pass the path as a CLI argument |
 
 ---
 
@@ -140,6 +177,26 @@ Este repositorio distribuye paquetes de extensiones de ADempiere como assets de 
 | MexicanLocation | Localizacion mexicana — CFDI, timbrado fiscal, catalogos SAT |
 | Scala-Package-Libs | Librerias de runtime de Scala requeridas por MexicanLocation |
 
+### ADEMPIERE_HOME
+
+El instalador resuelve el directorio de instalacion en este orden:
+
+1. **Argumento CLI** — path pasado directamente al script
+2. **Variable de ambiente `ADEMPIERE_HOME`** — si esta definida, se usa automaticamente
+3. **Prompt interactivo** — si ninguno esta disponible, el script pregunta el path
+
+Configura la variable de ambiente para no tener que pasar el path cada vez:
+
+```bash
+# Linux/macOS — agregar a ~/.bashrc, ~/.zshrc, o ~/.config/fish/config.fish
+export ADEMPIERE_HOME=/home/adempiere/Adempiere
+```
+
+```powershell
+# Windows PowerShell — definir variable de ambiente del sistema
+[Environment]::SetEnvironmentVariable("ADEMPIERE_HOME", "C:\PROGRA~1\e-Evolution\Adempiere", "User")
+```
+
 ### Instalacion Rapida (Linux/macOS)
 
 #### Opcion 1 — En una sola linea (bash)
@@ -154,7 +211,17 @@ bash <(curl -sL https://github.com/e-Evolution/adeosReleaseVersion/releases/late
 curl -sL https://github.com/e-Evolution/adeosReleaseVersion/releases/latest/download/install-release.sh | bash -s -- MexicanLocation /home/adempiere/Adempiere
 ```
 
-#### Opcion 2 — Descargar el instalador primero
+#### Opcion 2 — Usando la variable de ambiente ADEMPIERE_HOME
+
+```bash
+# Si ADEMPIERE_HOME esta definida, no es necesario pasar el path
+export ADEMPIERE_HOME=/home/adempiere/Adempiere
+
+curl -sL https://github.com/e-Evolution/adeosReleaseVersion/releases/latest/download/install-release.sh | bash -s -- MexicanLocation
+curl -sL https://github.com/e-Evolution/adeosReleaseVersion/releases/latest/download/install-release.sh | bash -s -- Scala-Package-Libs
+```
+
+#### Opcion 3 — Descargar el instalador primero
 
 ```bash
 # Descargar el script de instalacion
@@ -164,11 +231,13 @@ chmod +x install-release.sh
 # Listar paquetes disponibles
 ./install-release.sh --list
 
-# Instalar un paquete individual en tu directorio de ADempiere
+# Instalar con path explicito
 ./install-release.sh MexicanLocation /home/adempiere/Adempiere
 
-# Instalar las librerias de Scala
-./install-release.sh Scala-Package-Libs /home/adempiere/Adempiere
+# O usar la variable de ambiente ADEMPIERE_HOME
+export ADEMPIERE_HOME=/home/adempiere/Adempiere
+./install-release.sh MexicanLocation
+./install-release.sh Scala-Package-Libs
 
 # Instalar todos los paquetes de una vez
 ./install-release.sh --all /home/adempiere/Adempiere
@@ -189,26 +258,30 @@ Invoke-WebRequest -Uri "https://github.com/e-Evolution/adeosReleaseVersion/relea
 # Listar paquetes disponibles
 .\Install-Release.ps1 -List
 
-# Instalar un paquete individual
-.\Install-Release.ps1 -PackageName MexicanLocation -DestinationPath C:\PROGRA~1\e-Evolution\Adempiere
+# Instalar con path explicito
+.\Install-Release.ps1 -PackageName MexicanLocation -AdempiereHome C:\PROGRA~1\e-Evolution\Adempiere
 
-# Instalar las librerias de Scala
-.\Install-Release.ps1 -PackageName Scala-Package-Libs -DestinationPath C:\PROGRA~1\e-Evolution\Adempiere
+# O usar la variable de ambiente ADEMPIERE_HOME
+$env:ADEMPIERE_HOME = "C:\PROGRA~1\e-Evolution\Adempiere"
+.\Install-Release.ps1 -PackageName MexicanLocation
+.\Install-Release.ps1 -PackageName Scala-Package-Libs
 
 # Instalar todos los paquetes de una vez
-.\Install-Release.ps1 -All -DestinationPath C:\PROGRA~1\e-Evolution\Adempiere
+.\Install-Release.ps1 -All -AdempiereHome C:\PROGRA~1\e-Evolution\Adempiere
 
 # Instalar desde un tag de release especifico
-.\Install-Release.ps1 -PackageName MexicanLocation -DestinationPath C:\PROGRA~1\e-Evolution\Adempiere -Tag MexicanLocation-v1.1.0
+.\Install-Release.ps1 -PackageName MexicanLocation -AdempiereHome C:\PROGRA~1\e-Evolution\Adempiere -Tag MexicanLocation-v1.1.0
 ```
 
 ### Que hace el instalador
 
 1. Descarga el archivo `.jar` y el archivo de checksums `.sha256` desde GitHub Releases
 2. Verifica la integridad del archivo contra el checksum SHA256
-3. Extrae el archivo en el directorio de instalacion de ADempiere especificado
-4. Verifica cada archivo extraido contra los checksums individuales
-5. Limpia los archivos temporales
+3. Verifica si el paquete ya existe y pide confirmacion para sobrescribir
+4. Extrae el archivo en `ADEMPIERE_HOME/packages/<nombre>/`
+5. Muestra un log detallado de todos los archivos JAR desplegados
+6. Verifica cada archivo extraido contra los checksums individuales
+7. Muestra un resumen `INSTALLATION SUCCESSFUL` con los detalles del paquete
 
 ### Estructura de directorios resultante
 
@@ -239,3 +312,4 @@ ADEMPIERE_HOME=/home/adempiere/Adempiere
 | `curl: command not found` | Instalar curl: `apt install curl` (Debian/Ubuntu) o `yum install curl` (RHEL/CentOS) |
 | Fallo en verificacion de checksum | Volver a descargar el paquete — el archivo puede estar corrupto |
 | Permiso denegado | Ejecutar con `sudo` o asegurar permisos de escritura en el directorio destino |
+| `ADEMPIERE_HOME is not set` | Definir la variable de ambiente o pasar el path como argumento CLI |

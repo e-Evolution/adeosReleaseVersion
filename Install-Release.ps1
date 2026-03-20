@@ -86,13 +86,49 @@ function Get-ReleaseInfo {
     }
 }
 
-# --- Download file ---
+# --- Download file with progress ---
 function Get-RemoteFile {
     param([string]$Url, [string]$OutputPath)
     try {
-        $ProgressPreference = 'SilentlyContinue'
-        Invoke-WebRequest -Uri $Url -OutFile $OutputPath -UseBasicParsing
-        $ProgressPreference = 'Continue'
+        # Use .NET HttpClient for manual progress tracking
+        $httpClient = [System.Net.Http.HttpClient]::new()
+        $response = $httpClient.GetAsync($Url, [System.Net.Http.HttpCompletionOption]::ResponseHeadersRead).Result
+
+        if (-not $response.IsSuccessStatusCode) {
+            $httpClient.Dispose()
+            return $false
+        }
+
+        $totalBytes = $response.Content.Headers.ContentLength
+        $stream = $response.Content.ReadAsStreamAsync().Result
+        $fileStream = [System.IO.File]::Create($OutputPath)
+        $buffer = New-Object byte[] 65536
+        $downloaded = 0
+        $lastPercent = -1
+
+        while (($bytesRead = $stream.Read($buffer, 0, $buffer.Length)) -gt 0) {
+            $fileStream.Write($buffer, 0, $bytesRead)
+            $downloaded += $bytesRead
+
+            if ($totalBytes -and $totalBytes -gt 0) {
+                $percent = [math]::Floor(($downloaded / $totalBytes) * 100)
+                if ($percent -ne $lastPercent) {
+                    $downloadedMB = [math]::Round($downloaded / 1MB, 1)
+                    $totalMB = [math]::Round($totalBytes / 1MB, 1)
+                    $bar = "#" * [math]::Floor($percent / 2) + "-" * (50 - [math]::Floor($percent / 2))
+                    Write-Host -NoNewline ("`r  [$bar] ${percent}% (${downloadedMB}/${totalMB} MB)")
+                    $lastPercent = $percent
+                }
+            }
+        }
+
+        $fileStream.Close()
+        $stream.Close()
+        $httpClient.Dispose()
+
+        if ($totalBytes -and $totalBytes -gt 0) {
+            Write-Host ""
+        }
         return $true
     } catch {
         return $false

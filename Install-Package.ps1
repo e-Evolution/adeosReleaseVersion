@@ -157,7 +157,25 @@ if (Test-Path $pkgExtractDir) {
     }
 }
 
+# List files that will be installed (before extraction)
+Write-Info "Files to be installed in ${homeAbsolute}:"
+$jarContents = & jar tf $jarAbsolute | Where-Object { $_ -match '\.jar$' } | Sort-Object
+$fileCount = $jarContents.Count
+foreach ($entry in $jarContents) {
+    Write-Detail $entry
+}
+Write-Info "Total: $fileCount JARs"
+Write-Host ""
+
+# Confirm installation
+$confirm = Read-Host "Proceed with installation? [Y/n]"
+if ($confirm -match '^[Nn]$') {
+    Write-Info "Installation cancelled."
+    exit 0
+}
+
 # Extract archive into ADEMPIERE_HOME
+Write-Host ""
 Write-Info "Extracting '$pkgName' to $homeAbsolute ..."
 Write-Info "  ADEMPIERE_HOME = $homeAbsolute"
 Push-Location $homeAbsolute
@@ -169,18 +187,6 @@ try {
     }
 } finally {
     Pop-Location
-}
-
-# List extracted files
-$extractedFiles = @()
-if (Test-Path $pkgExtractDir) {
-    $extractedFiles = Get-ChildItem -Path $pkgExtractDir -Filter "*.jar" -Recurse -File
-}
-
-Write-Info "Deployed files:"
-foreach ($file in $extractedFiles) {
-    $relPath = $file.FullName.Substring($homeAbsolute.Length + 1)
-    Write-Detail $relPath
 }
 
 # Verify per-file checksums
@@ -228,7 +234,7 @@ Write-Host ""
 Write-Host "========================================" -ForegroundColor Green
 Write-Success "INSTALLATION SUCCESSFUL"
 Write-Info "  Package:        $pkgName"
-Write-Info "  Files deployed: $($extractedFiles.Count) JARs"
+Write-Info "  Files deployed: $fileCount JARs"
 Write-Info "  ADEMPIERE_HOME: $homeAbsolute"
 Write-Info "  Installed to:   $pkgExtractDir"
 Write-Host "========================================" -ForegroundColor Green

@@ -228,7 +228,25 @@ function Install-SinglePackage {
             }
         }
 
+        # List files that will be installed (before extraction)
+        Write-Info "Files to be installed in ${homeAbsolute}:"
+        $jarContents = & jar tf $jarFile | Where-Object { $_ -match '\.jar$' } | Sort-Object
+        $fileCount = $jarContents.Count
+        foreach ($entry in $jarContents) {
+            Write-Detail $entry
+        }
+        Write-Info "Total: $fileCount JARs"
+        Write-Host ""
+
+        # Confirm installation
+        $confirm = Read-Host "Proceed with installation? [Y/n]"
+        if ($confirm -match '^[Nn]$') {
+            Write-Info "Installation of '$Name' cancelled."
+            return $false
+        }
+
         # Extract into ADEMPIERE_HOME
+        Write-Host ""
         Write-Info "Extracting '$Name' to $homeAbsolute ..."
         Write-Info "  ADEMPIERE_HOME = $homeAbsolute"
         Push-Location $homeAbsolute
@@ -240,18 +258,6 @@ function Install-SinglePackage {
             }
         } finally {
             Pop-Location
-        }
-
-        # List extracted files
-        $extractedFiles = @()
-        if (Test-Path $pkgExtractDir) {
-            $extractedFiles = Get-ChildItem -Path $pkgExtractDir -Filter "*.jar" -Recurse -File
-        }
-
-        Write-Info "Deployed files:"
-        foreach ($file in $extractedFiles) {
-            $relPath = $file.FullName.Substring($homeAbsolute.Length + 1)
-            Write-Detail $relPath
         }
 
         # Verify per-file checksums
@@ -299,7 +305,7 @@ function Install-SinglePackage {
         Write-Host "========================================" -ForegroundColor Green
         Write-Success "INSTALLATION SUCCESSFUL"
         Write-Info "  Package:        $Name"
-        Write-Info "  Files deployed: $($extractedFiles.Count) JARs"
+        Write-Info "  Files deployed: $fileCount JARs"
         Write-Info "  ADEMPIERE_HOME: $homeAbsolute"
         Write-Info "  Installed to:   $pkgExtractDir"
         Write-Host "========================================" -ForegroundColor Green

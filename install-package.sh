@@ -19,6 +19,15 @@ success() { printf "${GREEN}[OK]${NC} %s\n" "$1"; }
 warn()    { printf "${YELLOW}[WARN]${NC} %s\n" "$1"; }
 error()   { printf "${RED}[ERROR]${NC} %s\n" "$1" >&2; }
 
+# --- Read from terminal (works with curl | bash) ---
+prompt_user() {
+    local prompt_msg="$1"
+    local answer
+    printf "%s" "$prompt_msg" > /dev/tty
+    read -r answer < /dev/tty
+    echo "$answer"
+}
+
 # --- Detect SHA256 command ---
 detect_sha_cmd() {
     if command -v sha256sum &>/dev/null; then
@@ -141,16 +150,15 @@ main() {
         else
             local default_home="/home/adempiere/Adempiere"
             warn "ADEMPIERE_HOME environment variable is not set."
-            printf "Enter ADEMPIERE_HOME path [%s]: " "$default_home"
-            read -r adempiere_home
+            adempiere_home=$(prompt_user "Enter ADEMPIERE_HOME path [$default_home]: ")
             adempiere_home="${adempiere_home:-$default_home}"
         fi
     fi
 
     # Validate/create destination
     if [[ ! -d "$adempiere_home" ]]; then
-        printf "ADEMPIERE_HOME '%s' does not exist. Create it? [y/N]: " "$adempiere_home"
-        read -r create_dir
+        local create_dir
+        create_dir=$(prompt_user "ADEMPIERE_HOME '$adempiere_home' does not exist. Create it? [y/N]: ")
         if [[ "$create_dir" =~ ^[Yy]$ ]]; then
             mkdir -p "$adempiere_home"
             success "Created $adempiere_home"
@@ -169,19 +177,39 @@ main() {
     pkg_dir_name=$(grep "packages/" "$checksum_file" 2>/dev/null | head -1 | sed 's|.*packages/\([^/]*\)/.*|\1|') || true
     pkg_dir_name="${pkg_dir_name:-$pkg_name}"
 
-    # Check if package already exists and confirm overwrite
     local pkg_extract_dir="$home_absolute/packages/$pkg_dir_name"
+
+    # Check if package already exists and confirm overwrite
     if [[ -d "$pkg_extract_dir" ]]; then
         warn "Package directory already exists: $pkg_extract_dir"
-        printf "Overwrite existing files? [y/N]: "
-        read -r overwrite
+        local overwrite
+        overwrite=$(prompt_user "Overwrite existing files? [y/N]: ")
         if [[ ! "$overwrite" =~ ^[Yy]$ ]]; then
             info "Installation cancelled."
             exit 0
         fi
     fi
 
+    # List files that will be installed (before extraction)
+    info "Files to be installed in $home_absolute:"
+    jar tf "$jar_absolute" | grep '\.jar$' | sort | while read -r f; do
+        printf "  %s\n" "$f"
+    done
+    local file_count
+    file_count=$(jar tf "$jar_absolute" | grep -c '\.jar$')
+    info "Total: $file_count JARs"
+    echo ""
+
+    # Confirm installation
+    local confirm
+    confirm=$(prompt_user "Proceed with installation? [Y/n]: ")
+    if [[ "$confirm" =~ ^[Nn]$ ]]; then
+        info "Installation cancelled."
+        exit 0
+    fi
+
     # Extract archive into ADEMPIERE_HOME
+    echo ""
     info "Extracting '$pkg_name' to $home_absolute ..."
     info "  ADEMPIERE_HOME = $home_absolute"
     cd "$home_absolute"
@@ -189,15 +217,6 @@ main() {
         error "Extraction failed"
         exit 6
     fi
-
-    # List extracted files
-    local extracted_count
-    extracted_count=$(find "$pkg_extract_dir" -type f -name "*.jar" 2>/dev/null | wc -l | tr -d ' ')
-
-    info "Deployed files ($extracted_count JARs):"
-    find "$pkg_extract_dir" -type f -name "*.jar" 2>/dev/null | sort | while read -r f; do
-        printf "  %s\n" "${f#$home_absolute/}"
-    done
 
     # Verify per-file checksums of extracted files
     if [[ "$skip_verify" == false && -f "$checksum_file" ]]; then
@@ -243,7 +262,7 @@ main() {
     echo "========================================"
     success "INSTALLATION SUCCESSFUL"
     info "  Package:        $pkg_name"
-    info "  Files deployed: $extracted_count JARs"
+    info "  Files deployed: $file_count JARs"
     info "  ADEMPIERE_HOME: $home_absolute"
     info "  Installed to:   $pkg_extract_dir"
     echo "========================================"

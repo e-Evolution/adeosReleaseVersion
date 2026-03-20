@@ -129,7 +129,7 @@ function Show-PackageList {
 function Install-SinglePackage {
     param(
         [string]$Name,
-        [string]$Home,
+        [string]$TargetHome,
         [string]$ReleaseTag,
         [bool]$NoVerify
     )
@@ -182,31 +182,31 @@ function Install-SinglePackage {
         }
 
         # Determine ADEMPIERE_HOME: parameter > env var > interactive prompt
-        if (-not $Home) {
+        if (-not $TargetHome) {
             if ($env:ADEMPIERE_HOME) {
-                $Home = $env:ADEMPIERE_HOME
-                Write-Info "Using ADEMPIERE_HOME from environment: $Home"
+                $TargetHome = $env:ADEMPIERE_HOME
+                Write-Info "Using ADEMPIERE_HOME from environment: $TargetHome"
             } else {
                 $defaultHome = "C:\PROGRA~1\e-Evolution\Adempiere"
                 Write-Warn "ADEMPIERE_HOME environment variable is not set."
                 $input = Read-Host "Enter ADEMPIERE_HOME path [$defaultHome]"
-                $Home = if ($input) { $input } else { $defaultHome }
+                $TargetHome = if ($input) { $input } else { $defaultHome }
             }
         }
 
         # Validate/create ADEMPIERE_HOME
-        if (-not (Test-Path $Home -PathType Container)) {
-            $create = Read-Host "ADEMPIERE_HOME '$Home' does not exist. Create it? [y/N]"
+        if (-not (Test-Path $TargetHome -PathType Container)) {
+            $create = Read-Host "ADEMPIERE_HOME '$TargetHome' does not exist. Create it? [y/N]"
             if ($create -match '^[Yy]$') {
-                New-Item -Path $Home -ItemType Directory -Force | Out-Null
-                Write-Success "Created $Home"
+                New-Item -Path $TargetHome -ItemType Directory -Force | Out-Null
+                Write-Success "Created $TargetHome"
             } else {
-                Write-Err "ADEMPIERE_HOME '$Home' does not exist."
+                Write-Err "ADEMPIERE_HOME '$TargetHome' does not exist."
                 return $false
             }
         }
 
-        $homeAbsolute = (Resolve-Path $Home).Path
+        $homeAbsolute = (Resolve-Path $TargetHome).Path
 
         # Detect package dir name from checksum paths
         $pkgDirName = $Name
@@ -345,14 +345,14 @@ if ($All) {
     $release.assets | Where-Object { $_.name -match '\.jar$' -and $_.name -notmatch '\.sha256$' } | ForEach-Object {
         $name = $_.name -replace '\.jar$', ''
         Write-Host ""
-        $result = Install-SinglePackage -Name $name -Home $AdempiereHome -ReleaseTag $Tag -NoVerify $SkipVerify.IsPresent
+        $result = Install-SinglePackage -Name $name -TargetHome $AdempiereHome -ReleaseTag $Tag -NoVerify $SkipVerify.IsPresent
         if ($result) { $installed++ } else { $failed++ }
     }
 
     Write-Host ""
     Write-Success "Done. Installed $installed packages ($failed failures) -> $AdempiereHome"
 } elseif ($PackageName) {
-    Install-SinglePackage -Name $PackageName -Home $AdempiereHome -ReleaseTag $Tag -NoVerify $SkipVerify.IsPresent
+    Install-SinglePackage -Name $PackageName -TargetHome $AdempiereHome -ReleaseTag $Tag -NoVerify $SkipVerify.IsPresent
 } else {
     Write-Host "Usage: .\Install-Release.ps1 <-PackageName name | -All | -List> [options]"
     Write-Host ""

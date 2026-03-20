@@ -114,18 +114,17 @@ list_packages() {
     printf "%-35s %s\n" "Package" "Size"
     printf "%-35s %s\n" "-----------------------------------" "--------"
 
-    echo "$response" | grep '"name"' | sed 's/.*: *"//;s/".*//' | grep '\.jar$' | grep -v '\.sha256' | while read -r asset_name; do
-        local pkg_name="${asset_name%.jar}"
-        local size
-        size=$(echo "$response" | grep -A2 "\"$asset_name\"" | grep '"size"' | head -1 | sed 's/[^0-9]//g')
-        local size_mb
-        if [[ -n "$size" && "$size" -gt 0 ]]; then
-            size_mb=$(echo "scale=1; $size / 1048576" | bc 2>/dev/null || echo "?")
-            printf "  %-33s %s MB\n" "$pkg_name" "$size_mb"
-        else
-            printf "  %-33s\n" "$pkg_name"
-        fi
-    done
+    # Extract package names and sizes using awk to pair them from asset blocks
+    echo "$response" | awk '
+        /"name"/ { gsub(/.*: *"|".*/, "", $0); name=$0 }
+        /"size"/ { gsub(/[^0-9]/, "", $0); size=$0
+            if (name ~ /\.jar$/ && name !~ /\.sha256$/) {
+                pkg = name; sub(/\.jar$/, "", pkg)
+                mb = sprintf("%.1f", size / 1048576)
+                printf "  %-33s %s MB\n", pkg, mb
+            }
+        }
+    '
 
     echo ""
 }

@@ -21,10 +21,16 @@ This repository distributes ADempiere extension packages as GitHub Release asset
 
 ### Quick Install (Linux/macOS)
 
-#### Option 1 — One-liner
+#### Option 1 — One-liner (bash)
 
 ```bash
 bash <(curl -sL https://github.com/e-Evolution/adeosReleaseVersion/releases/latest/download/install-release.sh) MexicanLocation /home/adempiere/Adempiere
+```
+
+#### Option 1 — One-liner (fish / zsh / any shell)
+
+```sh
+curl -sL https://github.com/e-Evolution/adeosReleaseVersion/releases/latest/download/install-release.sh | bash -s -- MexicanLocation /home/adempiere/Adempiere
 ```
 
 #### Option 2 — Download installer first
@@ -135,10 +141,16 @@ Este repositorio distribuye paquetes de extensiones de ADempiere como assets de 
 
 ### Instalacion Rapida (Linux/macOS)
 
-#### Opcion 1 — En una sola linea
+#### Opcion 1 — En una sola linea (bash)
 
 ```bash
 bash <(curl -sL https://github.com/e-Evolution/adeosReleaseVersion/releases/latest/download/install-release.sh) MexicanLocation /home/adempiere/Adempiere
+```
+
+#### Opcion 1 — En una sola linea (fish / zsh / cualquier shell)
+
+```sh
+curl -sL https://github.com/e-Evolution/adeosReleaseVersion/releases/latest/download/install-release.sh | bash -s -- MexicanLocation /home/adempiere/Adempiere
 ```
 
 #### Opcion 2 — Descargar el instalador primero

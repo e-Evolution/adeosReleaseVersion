@@ -40,7 +40,10 @@ function Invoke-PostInstallSteps {
     param([string]$HomePath)
 
     $serviceName = "Adempiere Server Service"
-    $hasService = [bool](Get-Service -Name $serviceName -ErrorAction SilentlyContinue)
+    $hasService = $false
+    if (Get-Command Get-Service -ErrorAction SilentlyContinue) {
+        $hasService = [bool](Get-Service -Name $serviceName -ErrorAction SilentlyContinue)
+    }
 
     Write-Host ""
     Write-Host "========================================" -ForegroundColor Cyan

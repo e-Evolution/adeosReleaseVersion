@@ -146,19 +146,19 @@ if (Test-Path $checksumFile) {
     }
 }
 
-# Check if package already exists and confirm overwrite
+# Check if package already exists
 $pkgExtractDir = Join-Path $homeAbsolute "packages\$pkgDirName"
-if (Test-Path $pkgExtractDir) {
-    Write-Warn "Package directory already exists: $pkgExtractDir"
-    $overwrite = Read-Host "Overwrite existing files? [y/N]"
-    if ($overwrite -notmatch '^[Yy]$') {
-        Write-Info "Installation cancelled."
-        exit 0
-    }
-}
+$isOverwrite = Test-Path $pkgExtractDir
 
 # List files that will be installed (before extraction)
-Write-Info "Files to be installed in ${homeAbsolute}:"
+Write-Host ""
+if ($isOverwrite) {
+    Write-Warn "Package '$pkgDirName' already exists in $homeAbsolute"
+    Write-Info "The following files will be OVERWRITTEN:"
+} else {
+    Write-Info "The following files will be installed in ${homeAbsolute}:"
+}
+
 $jarContents = & jar tf $jarAbsolute | Where-Object { $_ -match '\.jar$' } | Sort-Object
 $fileCount = $jarContents.Count
 foreach ($entry in $jarContents) {
@@ -167,11 +167,19 @@ foreach ($entry in $jarContents) {
 Write-Info "Total: $fileCount JARs"
 Write-Host ""
 
-# Confirm installation
-$confirm = Read-Host "Proceed with installation? [Y/n]"
-if ($confirm -match '^[Nn]$') {
-    Write-Info "Installation cancelled."
-    exit 0
+# Single confirmation per package
+if ($isOverwrite) {
+    $confirm = Read-Host "Overwrite and install '$pkgName'? [y/N]"
+    if ($confirm -notmatch '^[Yy]$') {
+        Write-Info "Installation of '$pkgName' cancelled."
+        exit 0
+    }
+} else {
+    $confirm = Read-Host "Proceed with installation of '$pkgName'? [Y/n]"
+    if ($confirm -match '^[Nn]$') {
+        Write-Info "Installation of '$pkgName' cancelled."
+        exit 0
+    }
 }
 
 # Extract archive into ADEMPIERE_HOME

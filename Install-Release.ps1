@@ -219,17 +219,17 @@ function Install-SinglePackage {
 
         # Check if package already exists
         $pkgExtractDir = Join-Path $homeAbsolute "packages\$pkgDirName"
-        if (Test-Path $pkgExtractDir) {
-            Write-Warn "Package directory already exists: $pkgExtractDir"
-            $overwrite = Read-Host "Overwrite existing files? [y/N]"
-            if ($overwrite -notmatch '^[Yy]$') {
-                Write-Info "Installation of '$Name' cancelled."
-                return $false
-            }
-        }
+        $isOverwrite = Test-Path $pkgExtractDir
 
         # List files that will be installed (before extraction)
-        Write-Info "Files to be installed in ${homeAbsolute}:"
+        Write-Host ""
+        if ($isOverwrite) {
+            Write-Warn "Package '$pkgDirName' already exists in $homeAbsolute"
+            Write-Info "The following files will be OVERWRITTEN:"
+        } else {
+            Write-Info "The following files will be installed in ${homeAbsolute}:"
+        }
+
         $jarContents = & jar tf $jarFile | Where-Object { $_ -match '\.jar$' } | Sort-Object
         $fileCount = $jarContents.Count
         foreach ($entry in $jarContents) {
@@ -238,11 +238,19 @@ function Install-SinglePackage {
         Write-Info "Total: $fileCount JARs"
         Write-Host ""
 
-        # Confirm installation
-        $confirm = Read-Host "Proceed with installation? [Y/n]"
-        if ($confirm -match '^[Nn]$') {
-            Write-Info "Installation of '$Name' cancelled."
-            return $false
+        # Single confirmation per package
+        if ($isOverwrite) {
+            $confirm = Read-Host "Overwrite and install '$Name'? [y/N]"
+            if ($confirm -notmatch '^[Yy]$') {
+                Write-Info "Installation of '$Name' cancelled."
+                return $false
+            }
+        } else {
+            $confirm = Read-Host "Proceed with installation of '$Name'? [Y/n]"
+            if ($confirm -match '^[Nn]$') {
+                Write-Info "Installation of '$Name' cancelled."
+                return $false
+            }
         }
 
         # Extract into ADEMPIERE_HOME

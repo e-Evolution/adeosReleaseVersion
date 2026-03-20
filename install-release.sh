@@ -229,20 +229,20 @@ install_package() {
     pkg_dir_name="${pkg_dir_name:-$pkg_name}"
 
     local pkg_extract_dir="$home_absolute/packages/$pkg_dir_name"
-
-    # Check if package already exists and confirm overwrite
+    local is_overwrite=false
     if [[ -d "$pkg_extract_dir" ]]; then
-        warn "Package directory already exists: $pkg_extract_dir"
-        local overwrite
-        overwrite=$(prompt_user "Overwrite existing files? [y/N]: ")
-        if [[ ! "$overwrite" =~ ^[Yy]$ ]]; then
-            info "Installation of '$pkg_name' cancelled."
-            return 0
-        fi
+        is_overwrite=true
     fi
 
     # List files that will be installed (before extraction)
-    info "Files to be installed in $home_absolute:"
+    echo ""
+    if [[ "$is_overwrite" == true ]]; then
+        warn "Package '$pkg_dir_name' already exists in $home_absolute"
+        info "The following files will be OVERWRITTEN:"
+    else
+        info "The following files will be installed in $home_absolute:"
+    fi
+
     jar tf "$jar_file" | grep '\.jar$' | sort | while read -r f; do
         printf "  %s\n" "$f"
     done
@@ -251,12 +251,20 @@ install_package() {
     info "Total: $file_count JARs"
     echo ""
 
-    # Confirm installation
+    # Single confirmation per package
     local confirm
-    confirm=$(prompt_user "Proceed with installation? [Y/n]: ")
-    if [[ "$confirm" =~ ^[Nn]$ ]]; then
-        info "Installation of '$pkg_name' cancelled."
-        return 0
+    if [[ "$is_overwrite" == true ]]; then
+        confirm=$(prompt_user "Overwrite and install '$pkg_name'? [y/N]: ")
+        if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
+            info "Installation of '$pkg_name' cancelled."
+            return 0
+        fi
+    else
+        confirm=$(prompt_user "Proceed with installation of '$pkg_name'? [Y/n]: ")
+        if [[ "$confirm" =~ ^[Nn]$ ]]; then
+            info "Installation of '$pkg_name' cancelled."
+            return 0
+        fi
     fi
 
     # Extract into ADEMPIERE_HOME

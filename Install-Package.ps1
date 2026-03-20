@@ -40,32 +40,56 @@ function Invoke-PostInstallSteps {
     param([string]$HomePath)
 
     $serviceName = "Adempiere Server Service"
+    $hasService = [bool](Get-Service -Name $serviceName -ErrorAction SilentlyContinue)
 
     Write-Host ""
     Write-Host "========================================" -ForegroundColor Cyan
     Write-Info "POST-INSTALLATION STEPS"
+    if ($hasService) {
+        Write-Info "  Mode: Windows Service ($serviceName)"
+    } else {
+        Write-Info "  Mode: Script-based (service not found)"
+    }
     Write-Host "========================================" -ForegroundColor Cyan
 
-    # Step 1: Stop service
+    # Step 1: Stop server
     Write-Host ""
-    Write-Info "Step 1/3: Stop ADempiere Server Service"
-    Write-Info "  Service: $serviceName"
-    $runStop = Read-Host "  Run this step? [Y/n]"
-    if ($runStop -notmatch '^[Nn]$') {
-        $svc = Get-Service -Name $serviceName -ErrorAction SilentlyContinue
-        if ($svc) {
+    Write-Info "Step 1/3: Stop ADempiere Server"
+    if ($hasService) {
+        Write-Info "  Service: $serviceName"
+        $runStop = Read-Host "  Run this step? [Y/n]"
+        if ($runStop -notmatch '^[Nn]$') {
             try {
                 Stop-Service -Name $serviceName -Force
-                $svc.WaitForStatus('Stopped', '00:01:00')
+                (Get-Service -Name $serviceName).WaitForStatus('Stopped', '00:01:00')
                 Write-Success "Service '$serviceName' stopped"
             } catch {
                 Write-Warn "Failed to stop service: $_"
             }
         } else {
-            Write-Warn "Service '$serviceName' not found (skipping)"
+            Write-Info "  Skipped"
         }
     } else {
-        Write-Info "  Skipped"
+        $stopScript = Join-Path $HomePath "utils\RUN_Server2Stop.bat"
+        if (Test-Path $stopScript) {
+            Write-Info "  Command: $stopScript"
+            $runStop = Read-Host "  Run this step? [Y/n]"
+            if ($runStop -notmatch '^[Nn]$') {
+                try {
+                    Push-Location (Split-Path $stopScript)
+                    & cmd /c (Split-Path $stopScript -Leaf)
+                    Write-Success "Server stop executed"
+                } catch {
+                    Write-Warn "Server stop returned error: $_"
+                } finally {
+                    Pop-Location
+                }
+            } else {
+                Write-Info "  Skipped"
+            }
+        } else {
+            Write-Warn "  Script not found: $stopScript (skipping)"
+        }
     }
 
     # Step 2: Silent setup
@@ -77,10 +101,13 @@ function Invoke-PostInstallSteps {
         $runSetup = Read-Host "  Run this step? [Y/n]"
         if ($runSetup -notmatch '^[Nn]$') {
             try {
-                & cmd /c $setupScript
+                Push-Location (Split-Path $setupScript)
+                & cmd /c (Split-Path $setupScript -Leaf)
                 Write-Success "Silent setup executed"
             } catch {
                 Write-Warn "Silent setup returned error: $_"
+            } finally {
+                Pop-Location
             }
         } else {
             Write-Info "  Skipped"
@@ -89,26 +116,44 @@ function Invoke-PostInstallSteps {
         Write-Warn "  Script not found: $setupScript (skipping)"
     }
 
-    # Step 3: Start service
+    # Step 3: Start server
     Write-Host ""
-    Write-Info "Step 3/3: Start ADempiere Server Service"
-    Write-Info "  Service: $serviceName"
-    $runStart = Read-Host "  Run this step? [Y/n]"
-    if ($runStart -notmatch '^[Nn]$') {
-        $svc = Get-Service -Name $serviceName -ErrorAction SilentlyContinue
-        if ($svc) {
+    Write-Info "Step 3/3: Start ADempiere Server"
+    if ($hasService) {
+        Write-Info "  Service: $serviceName"
+        $runStart = Read-Host "  Run this step? [Y/n]"
+        if ($runStart -notmatch '^[Nn]$') {
             try {
                 Start-Service -Name $serviceName
-                $svc.WaitForStatus('Running', '00:02:00')
+                (Get-Service -Name $serviceName).WaitForStatus('Running', '00:02:00')
                 Write-Success "Service '$serviceName' started"
             } catch {
                 Write-Warn "Failed to start service: $_"
             }
         } else {
-            Write-Warn "Service '$serviceName' not found (skipping)"
+            Write-Info "  Skipped"
         }
     } else {
-        Write-Info "  Skipped"
+        $startScript = Join-Path $HomePath "utils\RUN_Server2.bat"
+        if (Test-Path $startScript) {
+            Write-Info "  Command: $startScript"
+            $runStart = Read-Host "  Run this step? [Y/n]"
+            if ($runStart -notmatch '^[Nn]$') {
+                try {
+                    Push-Location (Split-Path $startScript)
+                    & cmd /c (Split-Path $startScript -Leaf)
+                    Write-Success "Server start executed"
+                } catch {
+                    Write-Warn "Server start returned error: $_"
+                } finally {
+                    Pop-Location
+                }
+            } else {
+                Write-Info "  Skipped"
+            }
+        } else {
+            Write-Warn "  Script not found: $startScript (skipping)"
+        }
     }
 }
 

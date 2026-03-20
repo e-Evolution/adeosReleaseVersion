@@ -141,6 +141,23 @@ $env:ADEMPIERE_HOME = "C:\PROGRA~1\e-Evolution\Adempiere"
 5. Displays a detailed log of all deployed JAR files
 6. Verifies each extracted file against per-file checksums
 7. Shows an `INSTALLATION SUCCESSFUL` summary with package details
+8. Guides you through post-installation server management steps
+
+### Post-Installation
+
+After a successful installation, the scripts guide you through three optional server management steps:
+
+1. **Stop ADempiere Server** — Stops the running server so changes can take effect
+2. **Run Silent Setup** — Deploys configuration changes (`RUN_silentsetup.sh` / `RUN_silentsetup.bat`)
+3. **Start ADempiere Server** — Restarts the server with the new packages
+
+Each step asks for confirmation before executing. Press Enter (default: Yes) to run the step, or type `n` to skip it.
+
+On **Linux/macOS**, the scripts execute `RUN_Server2Stop.sh`, `RUN_silentsetup.sh`, and `RUN_Server2.sh` from ADEMPIERE_HOME.
+
+On **Windows**, the scripts manage the **"Adempiere Server Service"** Windows service and execute `RUN_silentsetup.bat`.
+
+When installing all packages (`--all` / `-All`), post-installation steps run **once** after all packages are installed.
 
 ### Resulting directory structure
 
@@ -316,6 +333,23 @@ $env:ADEMPIERE_HOME = "C:\PROGRA~1\e-Evolution\Adempiere"
 5. Muestra un log detallado de todos los archivos JAR desplegados
 6. Verifica cada archivo extraido contra los checksums individuales
 7. Muestra un resumen `INSTALLATION SUCCESSFUL` con los detalles del paquete
+8. Guia al usuario a traves de los pasos de gestion del servidor post-instalacion
+
+### Post-Instalacion
+
+Despues de una instalacion exitosa, los scripts guian al usuario a traves de tres pasos opcionales de gestion del servidor:
+
+1. **Detener el servidor ADempiere** — Detiene el servidor en ejecucion para que los cambios tomen efecto
+2. **Ejecutar Silent Setup** — Despliega los cambios de configuracion (`RUN_silentsetup.sh` / `RUN_silentsetup.bat`)
+3. **Iniciar el servidor ADempiere** — Reinicia el servidor con los nuevos paquetes
+
+Cada paso pide confirmacion antes de ejecutarse. Presiona Enter (por defecto: Si) para ejecutar el paso, o escribe `n` para omitirlo.
+
+En **Linux/macOS**, los scripts ejecutan `RUN_Server2Stop.sh`, `RUN_silentsetup.sh` y `RUN_Server2.sh` desde ADEMPIERE_HOME.
+
+En **Windows**, los scripts gestionan el servicio de Windows **"Adempiere Server Service"** y ejecutan `RUN_silentsetup.bat`.
+
+Al instalar todos los paquetes (`--all` / `-All`), los pasos de post-instalacion se ejecutan **una sola vez** despues de instalar todos los paquetes.
 
 ### Estructura de directorios resultante
 

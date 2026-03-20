@@ -35,6 +35,83 @@ function Write-Warn    { param([string]$Msg) Write-Host "[WARN] $Msg" -Foregroun
 function Write-Err     { param([string]$Msg) Write-Host "[ERROR] $Msg" -ForegroundColor Red }
 function Write-Detail  { param([string]$Msg) Write-Host "  $Msg" -ForegroundColor DarkGray }
 
+# --- Post-installation steps ---
+function Invoke-PostInstallSteps {
+    param([string]$HomePath)
+
+    $serviceName = "Adempiere Server Service"
+
+    Write-Host ""
+    Write-Host "========================================" -ForegroundColor Cyan
+    Write-Info "POST-INSTALLATION STEPS"
+    Write-Host "========================================" -ForegroundColor Cyan
+
+    # Step 1: Stop service
+    Write-Host ""
+    Write-Info "Step 1/3: Stop ADempiere Server Service"
+    Write-Info "  Service: $serviceName"
+    $runStop = Read-Host "  Run this step? [Y/n]"
+    if ($runStop -notmatch '^[Nn]$') {
+        $svc = Get-Service -Name $serviceName -ErrorAction SilentlyContinue
+        if ($svc) {
+            try {
+                Stop-Service -Name $serviceName -Force
+                $svc.WaitForStatus('Stopped', '00:01:00')
+                Write-Success "Service '$serviceName' stopped"
+            } catch {
+                Write-Warn "Failed to stop service: $_"
+            }
+        } else {
+            Write-Warn "Service '$serviceName' not found (skipping)"
+        }
+    } else {
+        Write-Info "  Skipped"
+    }
+
+    # Step 2: Silent setup
+    $setupScript = Join-Path $HomePath "RUN_silentsetup.bat"
+    Write-Host ""
+    Write-Info "Step 2/3: Run Silent Setup (deploy changes)"
+    if (Test-Path $setupScript) {
+        Write-Info "  Command: $setupScript"
+        $runSetup = Read-Host "  Run this step? [Y/n]"
+        if ($runSetup -notmatch '^[Nn]$') {
+            try {
+                & cmd /c $setupScript
+                Write-Success "Silent setup executed"
+            } catch {
+                Write-Warn "Silent setup returned error: $_"
+            }
+        } else {
+            Write-Info "  Skipped"
+        }
+    } else {
+        Write-Warn "  Script not found: $setupScript (skipping)"
+    }
+
+    # Step 3: Start service
+    Write-Host ""
+    Write-Info "Step 3/3: Start ADempiere Server Service"
+    Write-Info "  Service: $serviceName"
+    $runStart = Read-Host "  Run this step? [Y/n]"
+    if ($runStart -notmatch '^[Nn]$') {
+        $svc = Get-Service -Name $serviceName -ErrorAction SilentlyContinue
+        if ($svc) {
+            try {
+                Start-Service -Name $serviceName
+                $svc.WaitForStatus('Running', '00:02:00')
+                Write-Success "Service '$serviceName' started"
+            } catch {
+                Write-Warn "Failed to start service: $_"
+            }
+        } else {
+            Write-Warn "Service '$serviceName' not found (skipping)"
+        }
+    } else {
+        Write-Info "  Skipped"
+    }
+}
+
 # --- Compute SHA256 hash ---
 function Get-Sha256Hash {
     param([string]$FilePath)
@@ -246,3 +323,5 @@ Write-Info "  Files deployed: $fileCount JARs"
 Write-Info "  ADEMPIERE_HOME: $homeAbsolute"
 Write-Info "  Installed to:   $pkgExtractDir"
 Write-Host "========================================" -ForegroundColor Green
+
+Invoke-PostInstallSteps -HomePath $homeAbsolute

@@ -28,6 +28,70 @@ prompt_user() {
     echo "$answer"
 }
 
+# --- Post-installation steps ---
+post_install_steps() {
+    local home="$1"
+
+    echo ""
+    echo "========================================"
+    info "POST-INSTALLATION STEPS"
+    echo "========================================"
+
+    # Step 1: Stop server
+    local stop_script="$home/utils/RUN_Server2Stop.sh"
+    echo ""
+    info "Step 1/3: Stop ADempiere Server"
+    if [[ -f "$stop_script" ]]; then
+        info "  Command: $stop_script"
+        local run_stop
+        run_stop=$(prompt_user "  Run this step? [Y/n]: ")
+        if [[ ! "$run_stop" =~ ^[Nn]$ ]]; then
+            bash "$stop_script" || warn "Server stop returned non-zero exit code"
+            success "Server stop executed"
+        else
+            info "  Skipped"
+        fi
+    else
+        warn "  Script not found: $stop_script (skipping)"
+    fi
+
+    # Step 2: Silent setup
+    local setup_script="$home/RUN_silentsetup.sh"
+    echo ""
+    info "Step 2/3: Run Silent Setup (deploy changes)"
+    if [[ -f "$setup_script" ]]; then
+        info "  Command: $setup_script"
+        local run_setup
+        run_setup=$(prompt_user "  Run this step? [Y/n]: ")
+        if [[ ! "$run_setup" =~ ^[Nn]$ ]]; then
+            bash "$setup_script" || warn "Silent setup returned non-zero exit code"
+            success "Silent setup executed"
+        else
+            info "  Skipped"
+        fi
+    else
+        warn "  Script not found: $setup_script (skipping)"
+    fi
+
+    # Step 3: Start server
+    local start_script="$home/utils/RUN_Server2.sh"
+    echo ""
+    info "Step 3/3: Start ADempiere Server"
+    if [[ -f "$start_script" ]]; then
+        info "  Command: $start_script"
+        local run_start
+        run_start=$(prompt_user "  Run this step? [Y/n]: ")
+        if [[ ! "$run_start" =~ ^[Nn]$ ]]; then
+            bash "$start_script" || warn "Server start returned non-zero exit code"
+            success "Server start executed"
+        else
+            info "  Skipped"
+        fi
+    else
+        warn "  Script not found: $start_script (skipping)"
+    fi
+}
+
 # --- Detect SHA256 command ---
 detect_sha_cmd() {
     if command -v sha256sum &>/dev/null; then
@@ -274,6 +338,8 @@ main() {
     info "  ADEMPIERE_HOME: $home_absolute"
     info "  Installed to:   $pkg_extract_dir"
     echo "========================================"
+
+    post_install_steps "$home_absolute"
 }
 
 main "$@"
